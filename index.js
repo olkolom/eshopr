@@ -6,7 +6,7 @@ const MongoDBStore = require('connect-mongodb-session')(session)
 const ejs = require('ejs')
 const json2csv = require('json2csv')
 const fs = require('fs')
-const { MongoClient } = require('mongodb')
+const getOrdersData = require ('./getOrders.js')
 
 dotenv.config()
 const config = {
@@ -21,22 +21,15 @@ const config = {
 
 const app = express()
 
-const dBclient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
-dBclient.connect().then(() => console.log('Connected to DB'))
-
 const sessionStore = new MongoDBStore({
   uri: config.mongoUri,
   collection: 'sessions'
 })
 
-const auth = new google.auth.OAuth2(
-  config.googleClientId,
-  config.googleClientSecret,
-  config.googleRedirectUrl
-)
-
 app.set('views', './views')
 app.set('view engine', 'ejs')
+
+app.use('/public', express.static('public'))
 
 app.use(session({
   secret: config.sessionSecret,
@@ -47,42 +40,60 @@ app.use(session({
   cookie: { maxAge: 7200000 }
 }))
 
-app.get('/callback', (req, res) => {
+const auth = new google.auth.OAuth2(
+  config.googleClientId,
+  config.googleClientSecret,
+  config.googleRedirectUrl
+)
+
+app.get('/auth', (req, res) => {
   const code = req.query.code
   if (code) { 
-    auth.getToken(code)
+    return auth.getToken(code)
     .then(data => {
-      console.log('Successfully authenticated')
       auth.setCredentials(data.tokens)
-      req.session.isAuthed = true
-      res.redirect('/')
-    })} else res.send('Something wrong')
-})
-
-app.get('/', (req, res) => {
-  if (!req.session.isAuthed) {
-    const connectionUrl = auth.generateAuthUrl({
+      const oauth2 = google.oauth2({ version: 'v2', auth })
+      oauth2.userinfo.get()
+      .then(userinfo => {
+        req.session.isAuthed = true
+        req.session.user = userinfo.data.email
+        res.redirect('/')
+      })
+    })
+    .catch(() => res.send('Something went wrong'))
+  }
+  const connectionUrl = auth.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
       scope: 'https://www.googleapis.com/auth/userinfo.email'
     })
-    console.log('Login attempt...')
-    res.redirect(connectionUrl)
-  } else { 
-      const oauth2 = google.oauth2({ version: 'v2', auth })
-      oauth2.userinfo.get()
-      .then(userinfo => {
-        if (!req.session.user) req.session.user = userinfo.data.email
-        console.log(`User: ${userinfo.data.email}`)
-        //mainView(req,res)
-        res.send("Auht OK")
-      })
-  }  
+  console.log('Login attempt...')
+  res.redirect(connectionUrl)
 })
 
-app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/'))
+app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/auth'))
 
-app.get("/protected", (req, res)=> {res.send("Protected")})
+app.get("/", (req, res)=> {
+  console.log(`Authenticated user: ${req.session.user}`)
+  getOrdersData(config).then( ordersData => {
+      const ordersToSend = ordersData.ordersList.filter(order => order.toSend)
+      const ppl = []
+      ordersToSend.forEach((order, index) => { if (order.delivery.slice(0,3) == 'PPL') ppl.push(index) })
+      res.render('index', {
+        ordersReserve: ordersData.ordersList.filter(order => !order.toSend),
+        ordersToSend : ordersToSend,
+        ppl: ppl,
+      })
+  })
+})
+
+app.get("/products", (req, res)=> {
+  getOrdersData(config).then( ordersData => {
+      res.render('products', {
+        productList: ordersData.productList,
+      })
+  })
+})
 
 app.listen(config.port, () => {
   console.log(`App listening at http://localhost:${config.port}`)
