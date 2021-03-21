@@ -6,7 +6,7 @@ const MongoDBStore = require('connect-mongodb-session')(session)
 const ejs = require('ejs')
 const json2csv = require('json2csv')
 const fs = require('fs')
-const getOrdersData = require ('./getOrders.js')
+const getOrdersData = require ('./getorders.js')
 
 dotenv.config()
 const config = {
@@ -74,25 +74,50 @@ app.get('/auth', (req, res) => {
 app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/auth'))
 
 app.get("/", (req, res)=> {
-  console.log(`Authenticated user: ${req.session.user}`)
-  getOrdersData(config).then( ordersData => {
+  if (!req.session.orders) { return res.redirect('/refresh') }
+  res.render('index', req.session.orders )
+})
+
+app.get("/refresh", (req, res)=> {
+    getOrdersData(config)
+    .then( ordersData => {
       const ordersToSend = ordersData.ordersList.filter(order => order.toSend)
       const ppl = []
       ordersToSend.forEach((order, index) => { if (order.delivery.slice(0,3) == 'PPL') ppl.push(index) })
-      res.render('index', {
+      req.session.orders = {
         ordersReserve: ordersData.ordersList.filter(order => !order.toSend),
         ordersToSend : ordersToSend,
         ppl: ppl,
-      })
-  })
+        productList: ordersData.productList,
+        stores: ['Outlet', 'Harfa', 'Kotva'],
+      }
+      res.redirect('/')
+    })
 })
 
 app.get("/products", (req, res)=> {
-  getOrdersData(config).then( ordersData => {
-      res.render('products', {
-        productList: ordersData.productList,
-      })
+  if (!req.session.orders) { return res.redirect('/refresh') }
+  if (req.query.action === undefined) { return res.render('products', req.session.orders) }
+  let action = req.query.action.split('_')
+  let type = action[0]
+  let index = parseInt(action[1],10)
+  req.session.orders.productList[index].action = type
+  res.render('products', req.session.orders)
+})
+
+app.get("/order", (req, res)=> {
+  if (!req.session.orders) { return res.redirect('/refresh') }
+  if (req.query.id === undefined) { return res.redirect('/') }
+  let order = req.query.id.split('_')
+  let arrayName = order[0]
+  let orderIndex = parseInt(order[1],10)
+  let orderData = req.session.orders[arrayName][orderIndex]
+  let items = []
+  req.session.orders.productList.forEach(item => {
+    if (item.orderNumber == orderData.number) items.push(item)
   })
+  orderData.items = items
+  res.render('order', orderData)
 })
 
 app.listen(config.port, () => {

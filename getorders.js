@@ -65,6 +65,19 @@ async function getOrdersData(config) {
             if (order.gateway_payment_state == "paid" || order.vyrizeno == "c") status='Ano'
             if (order.payment.nazev_platba == "Platba předem na účet" && order.vyrizeno != "c" ) status='Ne'
             if (order.payment.nazev_platba == "Platba dobírkou" || status=='Ano') toSend = true
+
+            order.row_list.forEach(product => {
+                productList.push({
+                    orderId: order.id_order,
+                    orderNumber: order.number,
+                    productType: product.product_name,
+                    productId: product.product_number,
+                    size: product.variant_description.split(' ')[2],
+                    price: product.price_total_with_vat,
+                    count: product.count,
+                    sale: toSend
+                })
+            })
             ordersList.push({
                 id: order.id_order,
                 number: order.number,
@@ -75,18 +88,30 @@ async function getOrdersData(config) {
                 date: order.origin.date.date.slice(5,16),
                 toSend: toSend,
             })
-            order.row_list.forEach(product => {
-                productList.push({
-                    orderId: order.id_order,
-                    orderNumber: order.number,
-                    productType: product.product_name,
-                    productId: product.product_number,
-                    size: product.variant_description.split(' ')[2],
-                    price: product.price_total_with_vat,
-                    count: product.count,
-                })
-            })
         })
+        //assign stores and action 'n'
+        const inventoryCollection = mongoClient.db('pmg').collection('variants')
+        for (i=0; i<productList.length; i++) {
+            let product = productList[i]
+            let storeID = "Není"
+            let stock = await inventoryCollection.findOne({
+                model: product.productId,
+                size: product.size,
+            })
+            if (stock !== null) {
+                let i=0
+                let founded=false 
+                while (!founded && i < stock.inventory.length) {
+                    if (stock.inventory[i].quantity > 0) {
+                        founded=true
+                        storeID=stock.inventory[i].id
+                    }
+                    i++
+                }
+            } else {storeID = "Nové"}
+            productList[i].storeID = storeID
+            productList[i].action = 'n'
+        }
     } catch(err) {
         console.log('Get orders data error:' + err.message)
     } 

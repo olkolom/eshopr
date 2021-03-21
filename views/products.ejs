@@ -3,31 +3,155 @@
 <head>
     <title>Objednávky Primigistore.cz</title>
     <link rel="stylesheet" href="/public/default.css">
+    <style>
+        /* 
+        Max width before this PARTICULAR table gets nasty
+        This query will take effect for any screen smaller than 760px
+        and also iPads specifically.
+        */
+        @media 
+        only screen and (max-width: 414px),
+        (min-device-width: 360px) and (max-device-width: 414px)  {
+
+            /* Force table to not be like tables anymore */
+            table, thead, tbody, th, td, tr { 
+                display: block; 
+            }
+            
+            /* Hide table headers (but not display: none;, for accessibility) */
+            thead tr { 
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr { border: 1px solid #ccc; }
+            
+            td { 
+                /* Behave  like a "row" */
+                border: none;
+                border-bottom: 1px solid #eee; 
+                position: relative;
+                padding-left: 30%; 
+            }
+            
+            td:before { 
+                /* Now like a table header */
+                position: absolute;
+                /* Top/left values mimic padding */
+                top: 6px;
+                left: 6px;
+                width: 45%; 
+                padding-right: 10px; 
+                white-space: nowrap;
+            }
+            
+            /*
+            Label the data
+            */
+            td:nth-of-type(1):before { content: "Akce"; }
+            td:nth-of-type(2):before { content: "Photo"; }
+            td:nth-of-type(3):before { content: "Typ"; }
+            td:nth-of-type(4):before { content: "Artikl"; }
+            td:nth-of-type(5):before { content: "Velikost"; }
+            td:nth-of-type(6):before { content: "Cena"; }
+            td:nth-of-type(7):before { content: "Ks"; }
+            td:nth-of-type(8):before { content: "Objednávka"; }
+            td:nth-of-type(9):before { content: "Prodejna"; }
+        }
+    </style>
 </head>
 <body>
     <h2>Zboží</h2>
-    <table>
-        <tr>
-            <th>Photo</th>
-            <th>Objednávka</th>
-            <th>Typ</th>
-            <th>Artikl</th>
-            <th>Velikost</th>
-            <th>Cena</th>
-            <th>Ks</th>
-        </tr>
-        <% productList.forEach((item, index) => { %>
-            <tr>
-                <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 height=75 width=75></img></td>
-                <td><%= item.orderNumber %></td>
-                <td><%= item.productType %></td>
-                <td><%= item.productId %></td>
-                <td><%= item.size %></td>
-                <td><%= item.price %></td>
-                <td><%= item.count %></td>
-            </tr>
-        <% }) %>
-    </table>
     <p><a href="/">Zpátky</a></p>
+    <form method="GET" action="/products">
+    <% stores.forEach(storeID => { %>
+        <h3><%= storeID %></h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Akce</th>
+                    <th>Photo</th>
+                    <th>Typ</th>
+                    <th>Artikl</th>
+                    <th>Velikost</th>
+                    <th>Cena</th>
+                    <th>Ks</th>
+                    <th>Objednávka</th>
+                    <th>Prodejna</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% productList.forEach((item, index) => { %>
+                    <% if(item.storeID==storeID && item.action==='n') { %>
+                        <tr>
+                            <td>
+                                <% if(item.sale){ %>
+                                    <button class="button button2" value=<%= 'p_'+index %> name="action" type="submit">Prodej</button>
+                                <% } else {%>
+                                    Rezervace
+                                <% } %>
+                            </td>
+                            <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 width=75></img></td>
+                            <td><%= item.productType %></td>
+                            <td><%= item.productId %></td>
+                            <td><%= item.size %></td>
+                            <td><%= item.price %></td>
+                            <td><%= item.count %></td>
+                            <td><%= item.orderNumber %></td>
+                            <td><%= item.storeID %></td>
+                        </tr>
+                <% }}) %>
+            </tbody>
+        </table>
+        <br>
+        <h4>Prodej</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Akce</th>
+                    <th>Photo</th>
+                    <th>Typ</th>
+                    <th>Artikl</th>
+                    <th>Velikost</th>
+                    <th>Cena</th>
+                    <th>Ks</th>
+                    <th>Objednávka</th>
+                    <th>Prodejna</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% productList.forEach((item, index) => { %>
+                    <% if(item.storeID==storeID&& item.action=='p') { %>
+                        <tr>
+                            <td>
+                                <button class="button button2" value=<%= 'n_'+index %> name="action" type="submit">Vrátit</button>
+                            </td>
+                            <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 width=75></img></td>
+                            <td><%= item.productType %></td>
+                            <td><%= item.productId %></td>
+                            <td><%= item.size %></td>
+                            <td><%= item.price %></td>
+                            <td><%= item.count %></td>
+                            <td><%= item.orderNumber %></td>
+                            <td><%= item.storeID %></td>
+                        </tr>
+                <% }}) %>
+            </tbody>
+        </table>
+        <button class="button button2" type="submit">Prodej v Beststore</button>
+        <br>
+    <% }) %>
+    </form>
+    <p><a href="/">Zpátky</a></p>
+<script type="text/javascript">
+    function toggleButton(buttonID) {
+        let button = document.getElementById(buttonID)
+        const newItem = document.createElement('p')
+        newItem.innerHTML = button.innerText
+        button.parentNode.replaceChild(newItem, button)
+        button = null
+    }
+</script>
 </body>
 </html>

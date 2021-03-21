@@ -6,11 +6,8 @@
 </head>
 <body>
     <form method="GET" action="pmg/ppl">
-        <button class="button button2" type="submit">PPL</button>
-        <a href="/pmg/process" class="button  button1">Obnovit</a>
-        <a href="/pmg/download?file=outlet.csv" class="button  button1">Outlet</a>
-        <a href="/products" class="button  button1">Boty</a>
-        <a href="/pmg/prod" class="button  button1">Pohyb</a>
+        <a href="/refresh" class="button  button2">Obnovit</a>
+        <a href="/products" class="button  button1">Zboží</a>
         <table>
                 <tr>
                     <th><input type="checkbox" 
@@ -28,7 +25,7 @@
                 <tr>
                     <td><input type="checkbox" id= <%= "cb" + index %> name="ord" value=<%= order.id %>></td>
                     <td><%= order.date %></td>
-                    <td><a href="/pmg/order?id=<%= order.number %>"><%= order.number %></a></td>
+                    <td><a href="order?id=<%= 'ordersToSend_' + index %>"><%= order.number %></a></td>
                     <td><%= order.name %></td>
                     <td><%= order.delivery %></td>
                     <td><%= order.payment %></td>
@@ -52,7 +49,7 @@
             <tr>
                 <td><input type="checkbox"></td>
                 <td><%= order.date %></td>
-                <td><a href="/pmg/order?id=<%= order.number %>"><%= order.number %></a></td>
+                <td><a href="/order?id=<%= 'ordersReserve_' + index %>"><%= order.number %></a></td>
                 <td><%= order.name %></td>
                 <td><%= order.delivery %></td>
                 <td><%= order.payment %></td>

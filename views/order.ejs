@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Objednávky Primigistore.cz</title>
+    <link rel="stylesheet" href="/public/default.css">
+    <style>
+        /* 
+        Max width before this PARTICULAR table gets nasty
+        This query will take effect for any screen smaller than 760px
+        and also iPads specifically.
+        */
+        @media 
+        only screen and (max-width: 414px),
+        (min-device-width: 360px) and (max-device-width: 414px)  {
+
+            /* Force table to not be like tables anymore */
+            table, thead, tbody, th, td, tr { 
+                display: block; 
+            }
+            
+            /* Hide table headers (but not display: none;, for accessibility) */
+            thead tr { 
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr { border: 1px solid #ccc; }
+            
+            td { 
+                /* Behave  like a "row" */
+                border: none;
+                border-bottom: 1px solid #eee; 
+                position: relative;
+                padding-left: 30%; 
+            }
+            
+            td:before { 
+                /* Now like a table header */
+                position: absolute;
+                /* Top/left values mimic padding */
+                top: 6px;
+                left: 6px;
+                width: 45%; 
+                padding-right: 10px; 
+                white-space: nowrap;
+            }
+            
+            /*
+            Label the data
+            */
+            td:nth-of-type(1):before { content: "Číslo"; }
+            td:nth-of-type(2):before { content: "Photo"; }
+            td:nth-of-type(3):before { content: "Číslo produktu"; }
+            td:nth-of-type(4):before { content: "Velikost"; }
+            td:nth-of-type(5):before { content: "Cena"; }
+            td:nth-of-type(6):before { content: "Ks"; }
+            td:nth-of-type(7):before { content: "Prodejna"; }
+        }
+    </style>
+</head>
+<body>
+    <h2>Objednávka <%= id %></h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Číslo</th>
+                <th>Photo</th>
+                <th>Číslo produktu</th>
+                <th>Velikost</th>
+                <th>Cena</th>
+                <th>Ks</th>
+                <th>Prodejna</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% items.forEach((item, index) => { %>
+                <tr>
+                    <td><%= index+1 %></td>
+                    <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=3 width=100></img></td>
+                    <td><%= item.productId %></td>
+                    <td><%= item.size %></td>
+                    <td><%= item.price + ' Kč' %></td>
+                    <td><%= item.count %></td>
+                    <td><%= item.storeID %></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+    <p>Doprava: <%= delivery %></p>
+    <p>Platba: <%= payment %></p>
+    <p><a class="button button1" href="/">Zpátky</a></p>
+</body>
+</html>
