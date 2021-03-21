@@ -93,7 +93,9 @@ async function getOrdersData(config) {
         const inventoryCollection = mongoClient.db('pmg').collection('variants')
         for (i=0; i<productList.length; i++) {
             let product = productList[i]
-            let storeID = "Není"
+            let storeID = "Neni"
+            let size = product.size
+            if (typeof(size) == "number" ) {size = size.toString()}
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size: product.size,

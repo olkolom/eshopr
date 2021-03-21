@@ -89,7 +89,7 @@ app.get("/refresh", (req, res)=> {
         ordersToSend : ordersToSend,
         ppl: ppl,
         productList: ordersData.productList,
-        stores: ['Outlet', 'Harfa', 'Kotva'],
+        stores: ['Outlet', 'Harfa', 'Kotva', 'Neni'],
       }
       res.redirect('/')
     })
