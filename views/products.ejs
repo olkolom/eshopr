@@ -83,13 +83,15 @@
             </thead>
             <tbody>
                 <% productList.forEach((item, index) => { %>
-                    <% if(item.storeID==storeID && item.action==='n') { %>
+                    <% if(item.storeID==storeID && item.action!=='p') { %>
                         <tr>
                             <td>
-                                <% if(item.sale){ %>
+                                <% if(item.sale && item.action !== 'u'){ %>
                                     <button class="button button2" value=<%= 'p_'+index %> name="action" type="submit">Prodej</button>
-                                <% } else {%>
+                                <% } else if (item.action !== 'u') {%>
                                     Rezervace
+                                <% } else { %>
+                                    Uloženo v BS
                                 <% } %>
                             </td>
                             <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 width=75></img></td>
@@ -104,7 +106,6 @@
                 <% }}) %>
             </tbody>
         </table>
-        <br>
         <h4>Prodej</h4>
         <table>
             <thead>
@@ -139,10 +140,43 @@
                 <% }}) %>
             </tbody>
         </table>
-        <button class="button button2" type="submit">Prodej v Beststore</button>
+        <a href="sell?id=<%= storeID %>" class="button button2">Prodej v Beststore</a>
         <br>
     <% }) %>
     </form>
+    <br>
+    <h3>Zbytek</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Akce</th>
+                <th>Photo</th>
+                <th>Typ</th>
+                <th>Artikl</th>
+                <th>Velikost</th>
+                <th>Cena</th>
+                <th>Ks</th>
+                <th>Objednávka</th>
+                <th>Prodejna</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% productList.forEach((item, index) => { %>
+                <% if(!stores.includes(item.storeID)) { %>
+                    <tr>
+                        <td></td>
+                        <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 width=75></img></td>
+                        <td><%= item.productType %></td>
+                        <td><%= item.productId %></td>
+                        <td><%= item.size %></td>
+                        <td><%= item.price %></td>
+                        <td><%= item.count %></td>
+                        <td><%= item.orderNumber %></td>
+                        <td><%= item.storeID %></td>
+                    </tr>
+            <% }}) %>
+        </tbody>
+    </table>
     <p><a href="/">Zpátky</a></p>
 <script type="text/javascript">
     function toggleButton(buttonID) {

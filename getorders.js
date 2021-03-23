@@ -89,11 +89,14 @@ async function getOrdersData(config) {
                 toSend: toSend,
             })
         })
-        //assign stores and action 'n'
+        //assign stores and action 'n' or 'u'
         const inventoryCollection = mongoClient.db('pmg').collection('variants')
+        const salesCollection = mongoClient.db('pmg').collection('sales')
         for (i=0; i<productList.length; i++) {
             let product = productList[i]
             let storeID = "Neni"
+            let storePrice = 0
+            let action = 'n'
             let size = product.size
             if (typeof(size) == "number" ) {size = size.toString()}
             let stock = await inventoryCollection.findOne({
@@ -107,20 +110,69 @@ async function getOrdersData(config) {
                     if (stock.inventory[i].quantity > 0) {
                         founded=true
                         storeID=stock.inventory[i].id
+                        storePrice=stock.inventory[i].price
                     }
                     i++
                 }
             } else {storeID = "Nové"}
+            let sold = await salesCollection.findOne({
+                items: {$elemMatch: { 
+                    orderId: product.orderNumber, 
+                    productId: product.productId,
+                    size: product.size,
+                }}
+            })
+            if (sold !== null) { action = 'u' }
             productList[i].storeID = storeID
-            productList[i].action = 'n'
+            productList[i].action = action
+            productList[i].storePrice = storePrice
         }
     } catch(err) {
         console.log('Get orders data error:' + err.message)
-    } 
+    } finally { mongoClient.close() }
     return { 
         ordersList: ordersList,
         productList: productList,
     }
 } 
 
-module.exports = getOrdersData
+async function saveSale(config, items, storeID) {
+    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+    let date = new Date()
+    let newSale = {date: date.toISOString().slice(0,10)}
+    try {
+        await mongoClient.connect()
+        const salesCollection = mongoClient.db('pmg').collection('sales')
+        let totalSum = 0
+        let totalCount = 0
+        let totalPriceDif = 0
+        itemsList = []
+        items.forEach(item => {
+            itemsList.push({
+                orderId: item.orderNumber,
+                productId: item.productId,
+                size: item.size,
+                price: item.storePrice,
+                count: item.count,
+                total: item.count*item.storePrice,
+            })
+            totalSum = totalSum + item.count*item.storePrice
+            totalCount = totalCount + item.count
+            totalPriceDif  = totalPriceDif + item.price - item.storePrice
+        })
+        newSale.totalSum = totalSum
+        newSale.totalCount = totalCount
+        newSale.totalPriceDif = totalPriceDif
+        newSale.storeID = storeID
+        newSale.items = itemsList
+        await salesCollection.insertOne(newSale)
+    } catch(err) {
+        console.log('Save sale data error:' + err.message)
+    } finally { mongoClient.close() }
+    return newSale
+} 
+
+module.exports = {
+    getOrdersData : getOrdersData,
+    saveSale : saveSale,
+}
