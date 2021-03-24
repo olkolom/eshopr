@@ -24,7 +24,7 @@ const app = express()
 
 const sessionStore = new MongoDBStore({
   uri: config.mongoUri,
-  collection: 'sessions'
+  collection: 'sessions',
 })
 
 app.set('views', './views')
@@ -37,8 +37,11 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   store: sessionStore,
-  cookie: { secure: true },
-  cookie: { maxAge: 7200000 }
+  cookie: { 
+    //secure: true,
+    maxAge: 7200000,
+    //sameSite: true,
+   },
 }))
 
 const auth = new google.auth.OAuth2(
@@ -86,12 +89,11 @@ app.get("/refresh", (req, res)=> {
     getOrdersData(config)
     .then( ordersData => {
       const ordersToSend = ordersData.ordersList.filter(order => order.toSend)
-      const ppl = []
-      ordersToSend.forEach((order, index) => { if (order.delivery.slice(0,3) == 'PPL') ppl.push(index) })
+      ordersToSend.forEach((order, index) => { 
+      })
       req.session.orders = {
         ordersReserve: ordersData.ordersList.filter(order => !order.toSend),
         ordersToSend : ordersToSend,
-        ppl: ppl,
         productList: ordersData.productList,
         stores: stores,
       }
@@ -130,8 +132,10 @@ app.get("/sell", (req, res)=> {
   let storeID = req.query.id
   let items =[]
   req.session.orders.productList.forEach( (item, index) => {
-    if (item.action == 'p' && item.storeID == storeID ) items.push(item)
-    req.session.orders.productList[index].action = 'u'  
+    if (item.action == 'p' && item.storeID == storeID ) {
+      items.push(item)
+      req.session.orders.productList[index].action = 'u'
+    }
   })
   saveSale(config, items, storeID)
   res.redirect('/products')
