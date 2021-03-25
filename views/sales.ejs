@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Objednávky Primigistore.cz</title>
+    <link rel="stylesheet" href="/public/default.css">
+    <style>
+    table {
+      width: 50%;
+    }
+    
+    td,
+    th {
+      text-align: left;
+    }
+    
+    }
+  </style>
+</head>
+<body>
+    <h2>Prodeje za <%= date %> celkem <%= daySales %> Kč</h2>
+    <form>
+        <input type="date" value="<%= date %>" name="date">
+        <button name="id" value="<%= id %>">Prodeje</button>
+    </form>
+    <p><a href="/products">Zpátky</a></p>
+    <% salesData.forEach(sale => { %>
+        <table>
+            <thead>
+                <tr>
+                    <th>Artikl</th>
+                    <th>Velikost</th>
+                    <th>Cena</th>
+                    <th>Ks</th>
+                    <th>Celkem</th>
+                    <th>Objednávka</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% sale.items.forEach(item => { %>
+                    <tr>
+                        <td><%= item.productId %></td>
+                        <td><%= item.size %></td>
+                        <td><%= item.price %></td>
+                        <td><%= item.count %></td>
+                        <td><%= item.total %></td>
+                        <td><%= item.orderId %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <p>Celkem <%= sale.totalSum %> Kč</p>
+    <% }) %>
+</body>
+</html>

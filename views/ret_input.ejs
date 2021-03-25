@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pohyb zboží Primigistore.cz</title>
+    <link rel="stylesheet" href="/public/default.css">
+</head>
+<body>
+    <script>
+        window.onload = function() {
+            var input = document.getElementById("pname").focus();
+        }
+    </script>
+    <h2>Pohyb zboží</h2>
+    <form method="GET" action="return">
+        <label for="pname">Artikl: </label>
+        <input type="text" id="pname" name="item">
+        <input type="submit" value="Hledat">
+    </form>
+    <br>
+    <table>
+        <tr>
+            <th></th>
+            <th>Datum</th>
+            <th>Číslo</th>
+            <th>Status</th>
+            <th>Objednavatel</th>
+            <th>Doprava</th>
+            <th>Platba</th>
+        </tr>
+    <% orders.forEach((order, index) => { %>
+        <tr>
+            <td><a href="/return?order=<%= order.number %>">Vrácení</a></td>
+            <td><%= order.date %></td>
+            <td><a href="/order?orderid=<%= order.number %>"><%= order.number %></a></td>
+            <td><%= order.status %></td>
+            <td><%= order.name %></td>
+            <td><%= order.delivery %></td>
+            <td><%= order.payment %></td>
+        </tr>
+    <% }) %>
+</table>
+    <p><a href="/">Zpátky</a></p>
+</body>
+</html>
