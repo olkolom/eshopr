@@ -112,16 +112,19 @@ app.get("/products", (req, res)=> {
 })
 
 app.get("/order", (req, res)=> {
-  if (req.query.id === undefined) { return res.redirect('/') }
-  let order = req.query.id.split('_')
-  let arrayName = order[0]
-  let orderIndex = parseInt(order[1],10)
-  let orderData = req.session.data[arrayName][orderIndex]
-  let items = []
-  req.session.data.productList.forEach(item => {
-    if (item.orderNumber == orderData.number) items.push(item)
-  })
-  orderData.items = items
+  if (req.query.id === undefined && req.query.orderid === undefined) { return res.redirect('/') }
+  let orderData = {items: []}
+  if (req.query.id !== undefined) {
+    let order = req.query.id.split('_')
+    let arrayName = order[0]
+    let orderIndex = parseInt(order[1],10)
+    orderData = req.session.data[arrayName][orderIndex]
+    let items = []
+    req.session.data.productList.forEach(item => {
+      if (item.orderNumber == orderData.number) items.push(item)
+    })
+    orderData.items = items
+  }
   res.render('order', orderData)
 })
 
@@ -149,6 +152,11 @@ app.get("/sales", (req, res)=> {
   dataSource.getSales(config, req.query.id, date).then(salesData => res.render('sales', salesData))
 })
 
+app.get("/return", (req, res)=> {
+  if (req.query.item !== undefined ) { dataSource.getOrdersByItem(config, req.query.item).then( orders => res.render('ret_input',orders))}
+  else if (req.query.order === undefined) { return res.render('ret_input', {orders:[]}) }
+  else res.render('ret_form')
+})
 
 app.listen(config.port, () => {
   console.log(`App running at http://localhost:${config.port}`)

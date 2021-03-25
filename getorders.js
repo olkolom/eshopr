@@ -187,8 +187,82 @@ async function getSales(config, storeID, date) {
     return {salesData : sales, daySales: daySalesTotal, date: date, id: storeID }
 } 
 
+
+async function getOrdersByItem (config, item) {
+    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+    let orders = []
+    try {
+        await mongoClient.connect()
+        const inventoryCollection = mongoClient.db('pmg').collection('variants')
+        const ordersCollection = mongoClient.db('pmg').collection('orders')
+        let itemID
+        if (item.length == 13) {
+            const ean = parseInt(item, 10)
+            const variant = await inventoryCollection.findOne({ ean: ean })
+            if (variant !== null) itemID=variant["_id"]
+        } else {
+            const params = item.split('-')
+            console.log(params)
+            const model = params[0].toString()
+            const size = params[1].toString()
+            console.log(model,size)
+            const variant = await inventoryCollection.findOne({ model: model, size: size })
+            console.log(variant)
+            if (variant !== null) itemID=variant["_id"]
+        }
+        if (itemID !== undefined) {
+            itemID = itemID.split('_')
+            const productID= parseInt(itemID[0], 10)
+            const variantID = parseInt(itemID[1], 10)
+            const dbQuery = { 
+                row_list: {$elemMatch: { 
+                    variant_id: variantID, 
+                    product_id: productID,
+                }}}
+            const dbOptions = {projection: {
+                '_id': 0,
+                'id_order': 1,
+                'number': 1,
+                'origin': 1,
+                'customer': 1,
+                'payment': 1,
+                'delivery': 1,
+                'vyrizeno': 1,
+            },
+            sort: [['id_order', 1]]
+          }
+            const selection = ordersCollection.find(dbQuery, dbOptions)
+            await selection.forEach(order => {
+                const statusVariants = {
+                    "n": "Nová",
+                    "a": "Vyřízená",
+                    "b": "Odeslaná",
+                    "c": "Zaplacená",
+                    "d": "Přijatá",
+                    "e": "Zrušená",
+                    "f": "Dobropis",
+                    "g": "Osobní odběr",
+                  }
+                  let status = statusVariants[order.vyrizeno] 
+                  orders.unshift({
+                    number: order.number,
+                    name: order.customer.delivery_information.name,
+                    delivery: order.delivery.nazev_postovne.split(' - ')[0], 
+                    payment: order.payment.nazev_platba,
+                    date: order.origin.date.date.slice(0,10),
+                    status: status
+                  })
+            })
+        }
+    } catch(err) {
+        console.log('Get orders data error:' + err.message)
+    } finally { mongoClient.close() }
+    return {orders : orders}
+} 
+
 module.exports = {
     getOrdersData : getOrdersData,
     saveSale : saveSale,
     getSales : getSales,
+    getOrdersByItem : getOrdersByItem,
 }
