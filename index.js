@@ -124,8 +124,9 @@ app.get("/order", (req, res)=> {
       if (item.orderNumber == orderData.number) items.push(item)
     })
     orderData.items = items
+    res.render('order', orderData)
   }
-  res.render('order', orderData)
+  dataSource.getOrder(config, req.query.orderid).then(orderData => res.render('order', orderData))
 })
 
 app.get("/sell", (req, res)=> {

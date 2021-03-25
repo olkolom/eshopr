@@ -136,6 +136,78 @@ async function getOrdersData(config) {
     }
 } 
 
+async function getOrder(config, orderID) {
+    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+    try {
+        await mongoClient.connect()
+        const ordersCollection = mongoClient.db('pmg').collection('orders')
+        const order = await ordersCollection.findOne({number: orderID})
+        orderData = {
+                id: order.id_order,
+                number: order.number,
+                name: order.customer.delivery_information.name,
+                delivery: order.delivery.nazev_postovne.split(' - ')[0], 
+                payment: order.payment.nazev_platba,
+                date: order.origin.date.date.slice(5,16),
+        }
+        let items = []
+        order.row_list.forEach(product => {
+            items.push({
+                orderId: order.id_order,
+                orderNumber: order.number,
+                productType: product.product_name,
+                productId: product.product_number,
+                size: product.variant_description.split(' ')[2],
+                price: product.price_total_with_vat,
+                count: product.count,
+            })
+        })
+        const inventoryCollection = mongoClient.db('pmg').collection('variants')
+        const salesCollection = mongoClient.db('pmg').collection('sales')
+        for (i=0; i<items.length; i++) {
+            let product = items[i]
+            let storeID = "Neni"
+            let storePrice = 0
+            let size = product.size
+            if (typeof(size) == "number" ) {size = size.toString()}
+            let stock = await inventoryCollection.findOne({
+                model: product.productId,
+                size: product.size,
+            })
+            if (stock !== null) {
+                let i=0
+                let founded=false 
+                while (!founded && i < stock.inventory.length) {
+                    if (stock.inventory[i].quantity > 0) {
+                        founded=true
+                        storeID=stock.inventory[i].id
+                        storePrice=stock.inventory[i].price
+                    }
+                    i++
+                }
+            } else {storeID = "Nové"}
+            let sold = await salesCollection.findOne({
+                items: {$elemMatch: { 
+                    orderId: product.orderNumber, 
+                    productId: product.productId,
+                    size: product.size,
+                }}
+            })
+            if (sold !== null) { 
+                storeID = sold.storeID
+                soldItem = sold.items.find(e => (e.productId === product.productId && e.size === product.size ))
+                storePrice = soldItem.price
+            }
+            items[i].storeID = storeID
+            items[i].storePrice = storePrice
+        }
+        orderData.items = items
+    } catch(err) {
+        console.log('Get order data error:' + err.message)
+    } finally { mongoClient.close() }
+    return orderData
+} 
+
 async function saveSale(config, items, storeID) {
     const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
     let date = new Date()
@@ -202,12 +274,9 @@ async function getOrdersByItem (config, item) {
             if (variant !== null) itemID=variant["_id"]
         } else {
             const params = item.split('-')
-            console.log(params)
             const model = params[0].toString()
             const size = params[1].toString()
-            console.log(model,size)
             const variant = await inventoryCollection.findOne({ model: model, size: size })
-            console.log(variant)
             if (variant !== null) itemID=variant["_id"]
         }
         if (itemID !== undefined) {
@@ -265,4 +334,5 @@ module.exports = {
     saveSale : saveSale,
     getSales : getSales,
     getOrdersByItem : getOrdersByItem,
+    getOrder: getOrder,
 }
