@@ -172,7 +172,23 @@ async function saveSale(config, items, storeID) {
     return newSale
 } 
 
+async function getSales(config, storeID, date) {
+    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+    let sales = []
+    let daySalesTotal = 0
+    try {
+        await mongoClient.connect()
+        const salesCollection = mongoClient.db('pmg').collection('sales')
+        sales = await salesCollection.find({ date: date, storeID: storeID}).toArray()
+        if (sales.length > 0) sales.forEach(sale => {daySalesTotal = daySalesTotal + sale.totalSum})
+    } catch(err) {
+        console.log('Get sales data error:' + err.message)
+    } finally { mongoClient.close() }
+    return {salesData : sales, daySales: daySalesTotal, date: date, id: storeID }
+} 
+
 module.exports = {
     getOrdersData : getOrdersData,
     saveSale : saveSale,
+    getSales : getSales,
 }

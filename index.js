@@ -6,7 +6,7 @@ const MongoDBStore = require('connect-mongodb-session')(session)
 const ejs = require('ejs')
 const json2csv = require('json2csv')
 const fs = require('fs')
-const { getOrdersData, saveSale } = require ('./getorders.js')
+const dataSource = require ('./getorders.js')
 const users = require('./users.json')
 
 dotenv.config()
@@ -79,47 +79,46 @@ app.get('/auth', (req, res) => {
 
 app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/auth'))
 
-app.get("/", (req, res)=> {
-  if (!req.session.orders) { return res.redirect('/refresh') }
-  res.render('index', req.session.orders )
+app.get("/refresh", (req, res)=> {
+  const stores = users[req.session.user]
+  dataSource.getOrdersData(config)
+  .then( ordersData => {
+    const ordersToSend = ordersData.ordersList.filter(order => order.toSend)
+    ordersToSend.forEach((order, index) => { 
+    })
+    req.session.data = {
+      ordersReserve: ordersData.ordersList.filter(order => !order.toSend),
+      ordersToSend : ordersToSend,
+      productList: ordersData.productList,
+      stores: stores,
+    }
+    res.redirect('/')
+  })
 })
 
-app.get("/refresh", (req, res)=> {
-    const stores = users[req.session.user]
-    getOrdersData(config)
-    .then( ordersData => {
-      const ordersToSend = ordersData.ordersList.filter(order => order.toSend)
-      ordersToSend.forEach((order, index) => { 
-      })
-      req.session.orders = {
-        ordersReserve: ordersData.ordersList.filter(order => !order.toSend),
-        ordersToSend : ordersToSend,
-        productList: ordersData.productList,
-        stores: stores,
-      }
-      res.redirect('/')
-    })
+app.use((req, res, next) => (req.session.data !== undefined) ? next() : res.redirect('/refresh'))
+
+app.get("/", (req, res)=> {
+  res.render('index', req.session.data )
 })
 
 app.get("/products", (req, res)=> {
-  if (!req.session.orders) { return res.redirect('/refresh') }
-  if (req.query.action === undefined) { return res.render('products', req.session.orders) }
+  if (req.query.action === undefined) { return res.render('products', req.session.data) }
   let action = req.query.action.split('_')
   let type = action[0]
   let index = parseInt(action[1],10)
-  req.session.orders.productList[index].action = type
-  res.render('products', req.session.orders )
+  req.session.data.productList[index].action = type
+  res.render('products', req.session.data )
 })
 
 app.get("/order", (req, res)=> {
-  if (!req.session.orders) { return res.redirect('/refresh') }
   if (req.query.id === undefined) { return res.redirect('/') }
   let order = req.query.id.split('_')
   let arrayName = order[0]
   let orderIndex = parseInt(order[1],10)
-  let orderData = req.session.orders[arrayName][orderIndex]
+  let orderData = req.session.data[arrayName][orderIndex]
   let items = []
-  req.session.orders.productList.forEach(item => {
+  req.session.data.productList.forEach(item => {
     if (item.orderNumber == orderData.number) items.push(item)
   })
   orderData.items = items
@@ -127,21 +126,30 @@ app.get("/order", (req, res)=> {
 })
 
 app.get("/sell", (req, res)=> {
-  if (!req.session.orders) { return res.redirect('/refresh') }
   if (req.query.id === undefined) { return res.redirect('/') }
   let storeID = req.query.id
   let items =[]
-  req.session.orders.productList.forEach( (item, index) => {
+  req.session.data.productList.forEach( (item, index) => {
     if (item.action == 'p' && item.storeID == storeID ) {
       items.push(item)
-      req.session.orders.productList[index].action = 'u'
+      req.session.data.productList[index].action = 'u'
     }
   })
-  saveSale(config, items, storeID)
+  if (items.length !== 0) dataSource.saveSale(config, items, storeID)
   res.redirect('/products')
+})
+
+app.get("/sales", (req, res)=> {
+  if (req.query.id === undefined) { return res.redirect('/') }
+  let date = req.query.date
+  if (date === undefined) {
+    date = new Date()
+    date = date.toISOString().slice(0,10)
+  }
+  dataSource.getSales(config, req.query.id, date).then(salesData => res.render('sales', salesData))
 })
 
 
 app.listen(config.port, () => {
-  console.log(`App listening at http://localhost:${config.port}`)
+  console.log(`App running at http://localhost:${config.port}`)
 })
