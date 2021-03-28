@@ -42,19 +42,36 @@ async function getOrdersData(config) {
     try {
         await mongoClient.connect()
         const ordersCollection = mongoClient.db('pmg').collection('orders')
-        //add fresh orders
+        //add fresh and update new, paid and unpaid orders
+        const ordersToUpdate = await ordersCollection.find(
+            { vyrizeno : { $in: ['c','d','n'] } }, 
+            { sort: {'id_order': -1}, projection: { '_id': 0, 'id_order': 1}})
+            .toArray()
+        const firstDbOrderId = ordersToUpdate[ordersToUpdate.length-1]['id_order']
+        const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}, projection: { '_id': 0, 'id_order': 1}})
+        const lastDbOrderId = lastDbOrder.id_order
         const lastApiOrder = await getApiOrders(config.eshopUri,1)
         const lastApiOrderId = lastApiOrder[0].id_order
-        const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}})
-        const lastDbOrderId = lastDbOrder.id_order
-        if (lastApiOrderId > lastDbOrderId) {
-            const newOrdersCount = lastApiOrderId - lastDbOrderId
-            if (newOrdersCount < 100) {
-                const freshApiOrders = await getApiOrders(config.eshopUri, newOrdersCount)
-                const result = await ordersCollection.insertMany(freshApiOrders)
-                console.log(`${result.insertedCount} fresh orders inserted`)
-            }
+        let ordersCount = lastApiOrderId - firstDbOrderId + 1
+        if (ordersCount > 99) ordersCount = 99 //TODO implement page read from api
+        let newOrdersCount = lastApiOrderId - lastDbOrderId
+        if (newOrdersCount > 99) newOrdersCount = 99 //TODO implement page read from api
+        let apiOrders = await getApiOrders(config.eshopUri, ordersCount)
+        const freshApiOrders = apiOrders.slice(0, newOrdersCount)
+        if (freshApiOrders.length > 0) {
+            let result = await ordersCollection.insertMany(freshApiOrders)
+            console.log(`${result.insertedCount} fresh orders inserted`)
         }
+        let updatedOrders = 0
+        for (let i=0; i<ordersToUpdate.length; i++) {
+            let orderIdToUpdate = ordersToUpdate[i]['id_order']
+            let orderIndex = apiOrders.findIndex(e => e['id_order'] === orderIdToUpdate)
+            let result = await ordersCollection.replaceOne(
+                { 'id_order' : apiOrders[orderIndex]['id_order'] }, apiOrders[orderIndex])
+            if (result.modifiedCount === 1) updatedOrders++
+        }
+        console.log(`${updatedOrders} orders updated from ${ordersToUpdate.length}`)
+
         //read and process new, paid and unpaid orders
         const dbQuery = { vyrizeno : { $in: ['c','d','n'] } }
         const dbOptions = { sort: {'id_order': -1} }
@@ -92,7 +109,7 @@ async function getOrdersData(config) {
         //assign stores and action 'n' or 'u'
         const inventoryCollection = mongoClient.db('pmg').collection('variants')
         const salesCollection = mongoClient.db('pmg').collection('sales')
-        for (i=0; i<productList.length; i++) {
+        for (let i=0; i<productList.length; i++) {
             let product = productList[i]
             let storeID = "Neni"
             let storePrice = 0
@@ -128,7 +145,7 @@ async function getOrdersData(config) {
             productList[i].storePrice = storePrice
         }
     } catch(err) {
-        console.log('Get orders data error:' + err.message)
+        console.log('Get orders data error:' + err)
     } finally { mongoClient.close() }
     return { 
         ordersList: ordersList,
@@ -212,6 +229,14 @@ async function saveSale(config, items, storeID) {
     const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
     let date = new Date()
     let newSale = {date: date.toISOString().slice(0,10)}
+    //action prepare
+    if (storeID === 'Kotva') {
+        let apparel = []
+        items.forEach((item, index) => {
+            if (item.productId.length> 7 && item.productId[1]< 7) apparel.push(index)
+        })
+        if (apparel.length > 2) apparel.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * 0.8))
+        }
     try {
         await mongoClient.connect()
         const salesCollection = mongoClient.db('pmg').collection('sales')
@@ -329,10 +354,32 @@ async function getOrdersByItem (config, item) {
     return {orders : orders}
 } 
 
+async function getItem (config, item) {
+    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+    let searchedItem = null
+    try {
+        await mongoClient.connect()
+        const inventoryCollection = mongoClient.db('pmg').collection('variants')
+        if (item.length == 13) {
+            const ean = parseInt(item, 10)
+            searchedItem = await inventoryCollection.findOne({ ean: ean })
+        } else {
+            const params = item.split('-')
+            const model = params[0].toString()
+            const size = params[1].toString()
+            searchedItem = await inventoryCollection.findOne({ model: model, size: size })
+        }
+    } catch(err) {
+        console.log('Get item data error:' + err.message)
+    } finally { mongoClient.close() }
+    return searchedItem
+} 
+
 module.exports = {
     getOrdersData : getOrdersData,
     saveSale : saveSale,
     getSales : getSales,
     getOrdersByItem : getOrdersByItem,
     getOrder: getOrder,
+    getItem: getItem,
 }

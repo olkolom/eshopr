@@ -103,12 +103,26 @@ app.get("/", (req, res)=> {
 })
 
 app.get("/products", (req, res)=> {
-  if (req.query.action === undefined) { return res.render('products', req.session.data) }
-  let action = req.query.action.split('_')
-  let type = action[0]
-  let index = parseInt(action[1],10)
-  req.session.data.productList[index].action = type
-  res.render('products', req.session.data )
+  if (req.query.action === undefined && req.query.item === undefined)
+    { return res.render('products', req.session.data) }
+  if (req.query.action !== undefined) {
+    let action = req.query.action.split('_')
+    let type = action[0]
+    let index = parseInt(action[1],10)
+    req.session.data.productList[index].action = type
+    return res.render('products', req.session.data )
+  }
+  dataSource.getItem(config, req.query.item).then( item => {
+    if (item !== null) {
+      let index = req.session.data.productList.findIndex(product => (
+        product.productId === item.model && product.size == item.size
+      ))
+      if (index !== -1)
+        if (req.session.data.productList[index].sale && req.session.data.productList[index].action === 'n')
+          req.session.data.productList[index].action = 'p'
+    }
+    res.render('products', req.session.data)
+  })  
 })
 
 app.get("/order", (req, res)=> {
@@ -124,7 +138,7 @@ app.get("/order", (req, res)=> {
       if (item.orderNumber == orderData.number) items.push(item)
     })
     orderData.items = items
-    res.render('order', orderData)
+    return res.render('order', orderData)
   }
   dataSource.getOrder(config, req.query.orderid).then(orderData => res.render('order', orderData))
 })

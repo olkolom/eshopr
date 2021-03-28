@@ -12,17 +12,15 @@
     th {
       text-align: left;
     }
-    
-    }
   </style>
 </head>
 <body>
     <h2>Prodeje za <%= date %> celkem <%= daySales %> Kč</h2>
     <form>
         <input type="date" value="<%= date %>" name="date">
-        <button name="id" value="<%= id %>">Prodeje</button>
+        <button name="id" value="<%= id %>" class="button button2">Prodeje</button>
+        <a href="/products" class="button button1">Zpátky</a>
     </form>
-    <p><a href="/products">Zpátky</a></p>
     <% salesData.forEach(sale => { %>
         <table>
             <thead>
