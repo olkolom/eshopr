@@ -231,12 +231,14 @@ async function saveSale(config, items, storeID) {
     let newSale = {date: date.toISOString().slice(0,10)}
     //action prepare
     if (storeID === 'Kotva') {
+        const notInAction = ['45101031','45102031','45102501','45121001','45121041','45121042','45122001','45122051','45122591','45246502']
         let apparel = []
         items.forEach((item, index) => {
-            if (item.productId.length> 7 && item.productId[1]< 7) apparel.push(index)
+            if (item.productId.length> 7 && item.productId[1]< 7) 
+                if (item.productId[1]==5 && notInAction.find(i=> i==item.productID) === undefined ) apparel.push(index)
         })
         if (apparel.length > 2) apparel.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * 0.8))
-        }
+    }
     try {
         await mongoClient.connect()
         const salesCollection = mongoClient.db('pmg').collection('sales')
