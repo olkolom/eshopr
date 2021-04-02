@@ -66,9 +66,12 @@ async function getOrdersData(config) {
         for (let i=0; i<ordersToUpdate.length; i++) {
             let orderIdToUpdate = ordersToUpdate[i]['id_order']
             let orderIndex = apiOrders.findIndex(e => e['id_order'] === orderIdToUpdate)
-            let result = await ordersCollection.replaceOne(
-                { 'id_order' : apiOrders[orderIndex]['id_order'] }, apiOrders[orderIndex])
-            if (result.modifiedCount === 1) updatedOrders++
+            let result
+            if (orderIndex !== -1) {
+                result = await ordersCollection.replaceOne(
+                    { 'id_order' : apiOrders[orderIndex]['id_order'] }, apiOrders[orderIndex])
+                if (result.modifiedCount === 1) updatedOrders++
+            }
         }
         console.log(`${updatedOrders} orders updated from ${ordersToUpdate.length}`)
 
