@@ -166,8 +166,10 @@ async function getOrder(config, orderID) {
                 id: order.id_order,
                 number: order.number,
                 name: order.customer.delivery_information.name,
-                delivery: order.delivery.nazev_postovne.split(' - ')[0], 
+                delivery: order.delivery.nazev_postovne.split(' - ')[0],
+                deliveryPrice: order.delivery.postovne,
                 payment: order.payment.nazev_platba,
+                paymentPrice: order.payment.castka_platba,
                 date: order.origin.date.date.slice(5,16),
         }
         let items = []
@@ -226,6 +228,53 @@ async function getOrder(config, orderID) {
         console.log('Get order data error:' + err.message)
     } finally { mongoClient.close() }
     return orderData
+} 
+
+async function saveReturn(config, data) {
+    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+    data.delivery = data.delivery * -1
+    data.payment = data.payment * -1
+    let date = new Date()
+    let newReturn = {
+        ...data,
+        date: date.toISOString().slice(0,10),
+        totalSum: data.delivery + data.payment,
+        totalCount: data.items.length * -1,
+        datePay: ""
+    }
+    let sum =0, dif =0
+    newReturn.items = data.items.map(item => {
+        item.price = item.price * -1
+        item.storePrice = item.storePrice * -1
+        item.count = item.count * -1 
+        item.saved = false
+        sum = sum + item.price
+        dif = dif +(item.price - item.storePrice)
+        return item
+    })
+    newReturn.totalPriceDif = dif
+    newReturn.totalSum = newReturn.totalSum + sum
+    try {
+        await mongoClient.connect()
+        const returnsCollection = mongoClient.db('pmg').collection('returns')
+        await returnsCollection.insertOne(newReturn)
+    } catch(err) {
+        console.log('Save return data error:' + err.message)
+    } finally { mongoClient.close() }
+    return newReturn
+} 
+
+async function getReturns(config, orderId) {
+    let returns
+    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+    try {
+        await mongoClient.connect()
+        const returnsCollection = mongoClient.db('pmg').collection('returns')
+        returns = await returnsCollection.find().toArray()
+    } catch(err) {
+        console.log('Get returns data error:' + err.message)
+    } finally { mongoClient.close() }
+    return {returns: returns}
 } 
 
 async function saveSale(config, items, storeID) {
@@ -383,6 +432,8 @@ async function getItem (config, item) {
 module.exports = {
     getOrdersData : getOrdersData,
     saveSale : saveSale,
+    saveReturn : saveReturn,
+    getReturns : getReturns,
     getSales : getSales,
     getOrdersByItem : getOrdersByItem,
     getOrder: getOrder,

@@ -5,7 +5,77 @@
     <link rel="stylesheet" href="/public/default.css">
 </head>
 <body>
-    <h2>Vrácení zboží</h2>
-    <p><a href="/return">Zpátky</a></p>
+    <h2>Vrácení zboží. Objednávka <%= id %></h2>
+    <form method="GET" action="retsave">
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" 
+                    id="itemSelect" 
+                    onchange="toggleCB('itemSelect', <%= items.length %>, 'delivery', 'payment')"></th>
+                <th>Photo</th>
+                <th>Číslo produktu</th>
+                <th>Velikost</th>
+                <th>Cena</th>
+                <th>Ks</th>
+                <th>Prodejna</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% items.forEach((item, index) => { %>
+                <tr>
+                    <td><input type="checkbox" id= <%= "itemSelect" + index %> name="item" value=<%= index %>></td>
+                    <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=3 width=100></img></td>
+                    <td><%= item.productId %></td>
+                    <td><%= item.size %></td>
+                    <td><%= item.price + ' Kč' %></td>
+                    <td><%= item.count %></td>
+                    <td><%= item.storeID %></td>
+                </tr>
+            <% }) %>
+            <tr>
+                <td><input type="checkbox" id= "delivery" name="delivery" value=<%= deliveryPrice %>></td>
+                <td></td>
+                <td><%= delivery %></td>
+                <td></td>
+                <td><%= deliveryPrice + ' Kč' %></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" id="payment" name="payment" value=<%= paymentPrice %>></td>
+                <td></td>
+                <td><%= payment %></td>
+                <td></td>
+                <td><%= paymentPrice + ' Kč' %></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+    <p>
+        <label for="acc">Číslo účtu: </label>
+        <input type="text" id="acc" name="acc">
+        <label for="bank"> / </label>
+        <input type="text" id="bank" name="bank">
+    </p>
+    <p>
+        <button class="button button2" type="submit" name="order" value=<%= number %>>Uložit</button>
+        <a href="/return" class="button button1">Zpátky</a>
+    </p>
+    </form>
+    <script type="text/javascript">
+        function toggleCB(id, length, id1, id2) {
+            const status = document.getElementById(id).checked
+            let index = 0
+            while (index < length) {
+                let element = document.getElementById(id + index)
+                if (element !== null) {element.checked = status}
+                index ++
+            }
+            document.getElementById(id1).checked=status
+            document.getElementById(id2).checked=status
+        }
+    </script>
 </body>
 </html>

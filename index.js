@@ -169,8 +169,35 @@ app.get("/sales", (req, res)=> {
 
 app.get("/return", (req, res)=> {
   if (req.query.item !== undefined ) { dataSource.getOrdersByItem(config, req.query.item).then( orders => res.render('ret_input',orders))}
-  else if (req.query.order === undefined) { return res.render('ret_input', {orders:[]}) }
-  else res.render('ret_form')
+  else if (req.query.orderid === undefined) { return res.render('ret_input', {orders:[]}) }
+  else dataSource.getOrder(config, req.query.orderid).then(orderData => res.render('ret_form', orderData))
+})
+
+app.get("/retsave", (req, res)=> {
+  if (req.query.order === undefined ) {return res.redirect('/return')}
+  if (req.query.item === undefined ) {return res.send('Žadné zboží')}
+  if (req.query.acc === "" ) {return res.send('Není číslo účtu')}
+  dataSource.getOrder(config, req.query.order)
+  .then(orderData => {
+    let items = []
+    if (!Array.isArray(req.query.item)) items.push(orderData.items[req.query.item])
+    else req.query.item.forEach(item => items.push(orderData.items[parseInt(item, 10)]))
+    return {
+      order: req.query.order,
+      account: req.query.acc,
+      bank: req.query.bank,
+      delivery: req.query.delivery,
+      payment: req.query.payment,
+      items: items,
+    }
+  })
+  .then(data => dataSource.saveReturn(config, data))
+  .then(data => res.redirect("/returns"))
+})
+
+app.get("/returns", (req, res)=> {
+  if (req.query.orderid !== undefined ) {}
+  else dataSource.getReturns(config).then(data => res.render('returns', data))
 })
 
 app.listen(config.port, () => {
