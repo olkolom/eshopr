@@ -246,8 +246,10 @@ async function getOrder(config, orderID) {
 
 async function saveReturn(config, data) {
     const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
-    data.delivery = data.delivery * -1
-    data.payment = data.payment * -1
+    if (data.delivery === undefined) { data.delivery = 0 }
+    else { data.delivery = data.delivery * -1 }
+    if (data.payment === undefined) { data.payment = 0 }
+    else { data.payment = data.payment * -1 }
     let date = new Date()
     let newReturn = {
         ...data,
