@@ -76,7 +76,11 @@
                 <tbody>
                     <% productList.forEach((item, index) => { %>
                         <% if(item.storeID==storeID&& item.action=='p') { %>
+                            <% if(item.ret) { %>
+                            <tr style="color: red">
+                            <% } else { %>
                             <tr>
+                            <% } %>
                                 <td>
                                     <button class="button button2" value=<%= 'n_'+index %> name="action" type="submit">Vrátit</button>
                                 </td>
@@ -111,7 +115,11 @@
                 <tbody>
                     <% productList.forEach((item, index) => { %>
                         <% if(item.storeID==storeID && item.action!=='p') { %>
+                            <% if(item.ret) { %>
+                            <tr style="color: red">
+                            <% } else { %>
                             <tr>
+                            <% } %>
                                 <td>
                                     <% if(item.sale && item.action !== 'u'){ %>
                                         <button class="button button2" value=<%= 'p_'+index %> name="action" type="submit">Prodej</button>

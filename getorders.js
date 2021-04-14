@@ -147,6 +147,20 @@ async function getOrdersData(config) {
             productList[i].action = action
             productList[i].storePrice = storePrice
         }
+        //add returns to productList
+        const returnsCollection = mongoClient.db('pmg').collection('returns')
+        const returns = returnsCollection.find({'items.saved': false})
+        await returns.forEach(ret => {
+            ret.items.forEach(item => {
+                if (!item.saved) productList.push({
+                    ...item,
+                    action: 'n',
+                    sale: true,
+                    ret: true
+                })
+            })
+        })
+
     } catch(err) {
         console.log('Get orders data error:' + err)
     } finally { mongoClient.close() }
@@ -297,8 +311,10 @@ async function saveSale(config, items, storeID) {
         let totalSum = 0
         let totalCount = 0
         let totalPriceDif = 0
-        itemsList = []
-        items.forEach(item => {
+        let itemsList = []
+        let returnsIndexes = []
+        items.forEach((item, index) => {
+            if (item.count < 0) returnsIndexes.push(index)
             itemsList.push({
                 orderId: item.orderNumber,
                 productId: item.productId,
@@ -307,7 +323,7 @@ async function saveSale(config, items, storeID) {
                 count: item.count,
                 total: item.count*item.storePrice,
             })
-            totalSum = totalSum + item.count*item.storePrice
+            totalSum = totalSum + item.count*Math.abs(item.storePrice)
             totalCount = totalCount + item.count
             totalPriceDif  = totalPriceDif + item.price - item.storePrice
         })
@@ -317,6 +333,14 @@ async function saveSale(config, items, storeID) {
         newSale.storeID = storeID
         newSale.items = itemsList
         await salesCollection.insertOne(newSale)
+
+        //update 'saved' status at returns
+        const returnsCollection = mongoClient.db('pmg').collection('returns')
+        for (let i=0; i<returnsIndexes.length; i++) {
+            let item = items[returnsIndexes[i]]
+            await returnsCollection.updateOne({order: item.orderNumber, items: {$elemMatch: { productId: item.productId, size: item.size }}},{ $set: { "items.$.saved" : true }})
+        }
+
     } catch(err) {
         console.log('Save sale data error:' + err.message)
     } finally { mongoClient.close() }
