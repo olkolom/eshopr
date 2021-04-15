@@ -288,7 +288,14 @@ async function getReturns(config, orderId) {
     try {
         await mongoClient.connect()
         const returnsCollection = mongoClient.db('pmg').collection('returns')
-        returns = await returnsCollection.find().toArray()
+        returns = await returnsCollection
+        .find(
+            {}, 
+            {
+                limit: 100,
+                sort: {date: -1}
+            }
+        ).toArray()
     } catch(err) {
         console.log('Get returns data error:' + err.message)
     } finally { mongoClient.close() }
