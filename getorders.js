@@ -42,6 +42,7 @@ async function getOrdersData(config) {
     try {
         await mongoClient.connect()
         const ordersCollection = mongoClient.db('pmg').collection('orders')
+        
         //add fresh and update new, paid and unpaid orders
         const ordersToUpdate = await ordersCollection.find(
             { vyrizeno : { $in: ['c','d','n'] } }, 
@@ -109,6 +110,7 @@ async function getOrdersData(config) {
                 toSend: toSend,
             })
         })
+        
         //assign stores and action 'n' or 'u'
         const inventoryCollection = mongoClient.db('pmg').collection('variants')
         const salesCollection = mongoClient.db('pmg').collection('sales')
@@ -297,13 +299,14 @@ async function saveSale(config, items, storeID) {
     const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
     let date = new Date()
     let newSale = {date: date.toISOString().slice(0,10)}
+    
     //action prepare
     if (storeID === 'Kotva') {
         const notInAction = ['45101031','45102031','45102501','45121001','45121041','45121042','45122001','45122051','45122591','45246502']
         let apparel = []
         items.forEach((item, index) => {
             if (item.productId.length> 7 && item.productId[1]< 7) 
-                if (item.productId[1]==5 && notInAction.find(i=> i==item.productID) === undefined ) apparel.push(index)
+                if (notInAction.find(i=> i==item.productID) === undefined ) apparel.push(index)
         })
         if (apparel.length > 2) apparel.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * 0.8))
     }
