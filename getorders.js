@@ -86,6 +86,7 @@ async function getOrdersData(config) {
             if (order.gateway_payment_state == "paid" || order.vyrizeno == "c") status='Ano'
             if (order.payment.nazev_platba == "Platba předem na účet" && order.vyrizeno != "c" ) status='Ne'
             if (order.payment.nazev_platba == "Platba dobírkou" || status=='Ano') toSend = true
+            if (order.delivery.nazev_postovne == "Osobní odběr") toSend = true
 
             order.row_list.forEach(product => {
                 productList.push({
@@ -166,6 +167,7 @@ async function getOrdersData(config) {
     } catch(err) {
         console.log('Get orders data error:' + err)
     } finally { mongoClient.close() }
+    console.log(ordersList.length)
     return { 
         ordersList: ordersList,
         productList: productList,

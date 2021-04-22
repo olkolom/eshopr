@@ -87,7 +87,7 @@ app.get("/refresh", (req, res)=> {
     ordersToSend.forEach((order, index) => { 
     })
     req.session.data = {
-      ordersReserve: ordersData.ordersList.filter(order => !order.toSend),
+      ordersReserve: ordersData.ordersList.filter(order => (!order.toSend || order.delivery == "Osobní odběr")),
       ordersToSend : ordersToSend,
       productList: ordersData.productList,
       stores: stores,
