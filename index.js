@@ -114,12 +114,17 @@ app.get("/products", (req, res)=> {
   }
   dataSource.getItem(config, req.query.item).then( item => {
     if (item !== null) {
-      let index = req.session.data.productList.findIndex(product => (
-        product.productId === item.model && product.size == item.size
+      let reversedIndex = req.session.data.productList.slice().reverse().findIndex(product => (
+        product.productId === item.model 
+        && product.size == item.size 
+        && product.action === 'n'
+        && product.sale
+        && product.storeID === users[req.session.user][0]
       ))
-      if (index !== -1)
-        if (req.session.data.productList[index].sale && req.session.data.productList[index].action === 'n')
-          req.session.data.productList[index].action = 'p'
+      if (reversedIndex !== -1) {
+        const index = req.session.data.productList.length -1 -reversedIndex
+        req.session.data.productList[index].action = 'p'
+      }
     }
     res.render('products', req.session.data)
   })  

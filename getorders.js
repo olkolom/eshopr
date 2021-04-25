@@ -115,7 +115,9 @@ async function getOrdersData(config) {
         //assign stores and action 'n' or 'u'
         const inventoryCollection = mongoClient.db('pmg').collection('variants')
         const salesCollection = mongoClient.db('pmg').collection('sales')
-        for (let i=0; i<productList.length; i++) {
+        let i= productList.length
+        while (i>0) {
+            i--
             let product = productList[i]
             let storeID = "Neni"
             let storePrice = 0
@@ -126,14 +128,25 @@ async function getOrdersData(config) {
                 model: product.productId,
                 size: product.size,
             })
+            //temporary solution to check more then one same item in orders
+            let itemQuantity = 1
+            let backwCounter = i+1
+            while (backwCounter < productList.length) {
+                let prevItem = productList[backwCounter]
+                if (product.productId === prevItem.productId && product.size === prevItem.size) itemQuantity++
+                backwCounter++
+            }
+            //also some code  at if code below
             if (stock !== null) {
                 let i=0
                 let founded=false 
                 while (!founded && i < stock.inventory.length) {
                     if (stock.inventory[i].quantity > 0) {
-                        founded=true
-                        storeID=stock.inventory[i].id
-                        storePrice=stock.inventory[i].price
+                        if (stock.inventory[i].quantity - itemQuantity >= 0) {
+                            founded=true
+                            storeID=stock.inventory[i].id
+                            storePrice=stock.inventory[i].price
+                        } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
                     }
                     i++
                 }
@@ -167,7 +180,6 @@ async function getOrdersData(config) {
     } catch(err) {
         console.log('Get orders data error:' + err)
     } finally { mongoClient.close() }
-    console.log(ordersList.length)
     return { 
         ordersList: ordersList,
         productList: productList,
