@@ -45,7 +45,7 @@ async function getOrdersData(config) {
         
         //add fresh and update new, paid and unpaid orders
         const ordersToUpdate = await ordersCollection.find(
-            { vyrizeno : { $in: ['c','d','n'] } }, 
+            { vyrizeno : { $in: ['c','d','n','g'] } }, 
             { sort: {'id_order': -1}, projection: { '_id': 0, 'id_order': 1}})
             .toArray()
         const firstDbOrderId = ordersToUpdate[ordersToUpdate.length-1]['id_order']
@@ -77,16 +77,19 @@ async function getOrdersData(config) {
         console.log(`${updatedOrders} orders updated from ${ordersToUpdate.length}`)
 
         //read and process new, paid and unpaid orders
-        const dbQuery = { vyrizeno : { $in: ['c','d','n'] } }
+        const dbQuery = { vyrizeno : { $in: ['c','d','n','g'] } }
         const dbOptions = { sort: {'id_order': -1} }
         await ordersCollection.find(dbQuery, dbOptions).forEach(order => {
             let status = ''
             let toSend = false
             if (order.gateway_payment_state && order.gateway_payment_state != "paid") status='Ne'
+            if (order.payment.nazev_platba == "Platba předem na účet" 
+                && (order.vyrizeno != "c" || order.vyrizeno != "g")) status='Ne'
             if (order.gateway_payment_state == "paid" || order.vyrizeno == "c") status='Ano'
-            if (order.payment.nazev_platba == "Platba předem na účet" && order.vyrizeno != "c" ) status='Ne'
+            if (order.delivery.nazev_postovne == "Osobní odběr" 
+                && order.payment.nazev_platba == "Platba předem na účet" 
+                && order.vyrizeno == "g") status='Ano'
             if (order.payment.nazev_platba == "Platba dobírkou" || status=='Ano') toSend = true
-            if (order.delivery.nazev_postovne == "Osobní odběr") toSend = true
 
             order.row_list.forEach(product => {
                 productList.push({
@@ -97,7 +100,8 @@ async function getOrdersData(config) {
                     size: product.variant_description.split(' ')[2],
                     price: product.price_total_with_vat,
                     count: product.count,
-                    sale: toSend
+                    sale: toSend,
+                    delivery: order.delivery.nazev_postovne.split(' - ')[0]
                 })
             })
             ordersList.push({
@@ -109,6 +113,7 @@ async function getOrdersData(config) {
                 status: status,
                 date: order.origin.date.date.slice(5,16),
                 toSend: toSend,
+                sender: '',
             })
         })
         
@@ -158,11 +163,29 @@ async function getOrdersData(config) {
                     size: product.size,
                 }}
             })
-            if (sold !== null) { action = 'u' }
+            let saleDate = ""
+            if (sold !== null) { 
+                action = 'u'
+                storeID = sold.storeID
+                saleDate = sold.date.slice(-5)
+            }
+            productList[i].date = saleDate
             productList[i].storeID = storeID
             productList[i].action = action
             productList[i].storePrice = storePrice
         }
+
+        //define sender
+        productList.forEach(item => {
+            const orderIndex = ordersList.findIndex(order => order.number == item.orderNumber)
+            let sender = item.storeID
+            if (sender === 'Outlet') sender = 'Harfa'
+            if (item.delivery === "Osobní odběr") sender = 'Kotva'
+            if (ordersList[orderIndex].sender === ''
+                || (ordersList[orderIndex].sender === 'Kotva' && sender === 'Harfa')) 
+                { ordersList[orderIndex].sender = sender }
+        })
+
         //add returns to productList
         const returnsCollection = mongoClient.db('pmg').collection('returns')
         const returns = returnsCollection.find({'items.saved': false})

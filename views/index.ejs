@@ -16,6 +16,7 @@
                         id="pp" 
                         onchange="toggleCB('pp', <%= ordersToSend.length %>)">
                     </th>
+                    <th>Odesílatel</th>
                     <th>Datum</th>
                     <th>Číslo</th>
                     <th>Objednavatel</th>
@@ -27,6 +28,7 @@
                 <% if (order.delivery.slice(0,3) == 'PPL') { %>
                 <tr>
                     <td><input type="checkbox" id= <%= "pp" + index %> name="ord" value=<%= order.id %>></td>
+                    <td><%= order.sender %></td>
                     <td><%= order.date %></td>
                     <td><a href="order?id=<%= 'ordersToSend_' + index %>"><%= order.number %></a></td>
                     <td><%= order.name %></td>
@@ -43,6 +45,7 @@
                         id="za" 
                         onchange="toggleCB('za', <%= ordersToSend.length %>)">
                     </th>
+                    <th>Odesílatel</th>
                     <th>Datum</th>
                     <th>Číslo</th>
                     <th>Objednavatel</th>
@@ -54,6 +57,7 @@
                 <% if (order.delivery.slice(0,3) == 'Zás') { %>
                 <tr>
                     <td><input type="checkbox" id= <%= "za" + index %> name="ord" value=<%= order.id %>></td>
+                    <td><%= order.sender %></td>
                     <td><%= order.date %></td>
                     <td><a href="order?id=<%= 'ordersToSend_' + index %>"><%= order.number %></a></td>
                     <td><%= order.name %></td>
@@ -68,6 +72,7 @@
     <table>
         <tr>
             <th><input type="checkbox"></th>
+            <th>Odesílatel</th>
             <th>Datum</th>
             <th>Číslo</th>
             <th>Objednavatel</th>
@@ -78,6 +83,7 @@
         <% ordersReserve.forEach((order, index) => { %>
             <tr>
                 <td><input type="checkbox"></td>
+                <td><%= order.sender %></td>
                 <td><%= order.date %></td>
                 <td><a href="/order?id=<%= 'ordersReserve_' + index %>"><%= order.number %></a></td>
                 <td><%= order.name %></td>

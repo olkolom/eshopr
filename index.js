@@ -83,12 +83,9 @@ app.get("/refresh", (req, res)=> {
   const stores = users[req.session.user]
   dataSource.getOrdersData(config)
   .then( ordersData => {
-    const ordersToSend = ordersData.ordersList.filter(order => order.toSend)
-    ordersToSend.forEach((order, index) => { 
-    })
     req.session.data = {
       ordersReserve: ordersData.ordersList.filter(order => (!order.toSend || order.delivery == "Osobní odběr")),
-      ordersToSend : ordersToSend,
+      ordersToSend : ordersData.ordersList.filter(order => order.toSend),
       productList: ordersData.productList,
       stores: stores,
     }

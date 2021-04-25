@@ -81,8 +81,10 @@
                                         <button class="button button2" value=<%= 'p_'+index %> name="action" type="submit">Prodej</button>
                                     <% } else if (item.action !== 'u') {%>
                                         Rezervace
-                                    <% } else { %>
-                                        Uloženo v BS
+                                    <% } else if (item.delivery !== "Osobní odběr") { %>
+                                        Uloženo v BS <%= item.date %>
+                                    <% } else {%>
+                                        Uloženo v BS <%= item.date %> (Os.od.)
                                     <% } %>
                                 </td>
                                 <td><a href="/order?orderid=<%= item.orderNumber %>"><%= item.orderNumber %></a></td>
