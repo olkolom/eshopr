@@ -39,7 +39,7 @@ app.use(session({
   store: sessionStore,
   cookie: { 
     //secure: true,
-    maxAge: 7200000,
+    maxAge: 43200000,
     //sameSite: true,
    },
 }))
@@ -96,7 +96,7 @@ app.get("/refresh", (req, res)=> {
   })
 })
 
-app.use((req, res, next) => (req.session.data !== undefined) ? next() : res.redirect('/refresh'))
+app.use((req, res, next) => (req.session.data !== undefined && req.path !== '/refresh') ? next() : res.redirect('/refresh'))
 
 app.get("/", (req, res)=> {
   res.render('index', req.session.data )
