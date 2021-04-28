@@ -7,10 +7,10 @@
     <form method="GET" action="/products">
         <label for="pname">Artikl: </label>
         <input type="text" id="pname" name="item">
-        <input type="submit" value="Hledat">    
+        <input type="submit" value="Hledat" class="button button2">    
         <% stores.forEach(storeID => { %>
             <h3>Zboží <%= storeID %></h3>
-            <a href="sell?id=<%= storeID %>" class="button button2">Prodej v Beststore</a>
+            <a href="sell?id=<%= storeID %>" class="button button1">Prodej v Beststore</a>
             <a href="sales?id=<%= storeID %>" class="button button1">Historie</a>
             <a href="/" class="button button1">Zpátky</a>
             <br> <br>

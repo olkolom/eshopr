@@ -1,108 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Objednávky Primigistore.cz</title>
-    <link rel="stylesheet" href="/public/default.css">
-</head>
-<body>
-    <form method="GET" action="pmg/ppl">
-        <a href="/refresh" class="button  button2">Obnovit</a>
-        <a href="/products" class="button  button1">Zboží</a>
-        <a href="/return" class="button  button2">Vrácení</a>
-        <h3>PPL</h3>
-        <table>
-                <tr>
-                    <th><input type="checkbox" 
-                        id="pp" 
-                        onchange="toggleCB('pp', <%= ordersToSend.length %>)">
-                    </th>
-                    <th>Odesílatel</th>
-                    <th>Datum</th>
-                    <th>Číslo</th>
-                    <th>Objednavatel</th>
-                    <th>Doprava</th>
-                    <th>Platba</th>
-                    <th>Zaplaceno</th>
-                </tr>
-            <% ordersToSend.forEach((order, index) => { %>
-                <% if (order.delivery.slice(0,3) == 'PPL') { %>
-                <tr>
-                    <td><input type="checkbox" id= <%= "pp" + index %> name="ord" value=<%= order.id %>></td>
-                    <td><%= order.sender %></td>
-                    <td><%= order.date %></td>
-                    <td><a href="order?id=<%= 'ordersToSend_' + index %>"><%= order.number %></a></td>
-                    <td><%= order.name %></td>
-                    <td><%= order.delivery %></td>
-                    <td><%= order.payment %></td>
-                    <td><%= order.status %></td>
-                </tr>
-            <% }}) %>
-        </table>
-        <h3>Zásilkovna</h3>
-        <table>
-                <tr>
-                    <th><input type="checkbox" 
-                        id="za" 
-                        onchange="toggleCB('za', <%= ordersToSend.length %>)">
-                    </th>
-                    <th>Odesílatel</th>
-                    <th>Datum</th>
-                    <th>Číslo</th>
-                    <th>Objednavatel</th>
-                    <th>Doprava</th>
-                    <th>Platba</th>
-                    <th>Zaplaceno</th>
-                </tr>
-            <% ordersToSend.forEach((order, index) => { %>
-                <% if (order.delivery.slice(0,3) == 'Zás') { %>
-                <tr>
-                    <td><input type="checkbox" id= <%= "za" + index %> name="ord" value=<%= order.id %>></td>
-                    <td><%= order.sender %></td>
-                    <td><%= order.date %></td>
-                    <td><a href="order?id=<%= 'ordersToSend_' + index %>"><%= order.number %></a></td>
-                    <td><%= order.name %></td>
-                    <td><%= order.delivery %></td>
-                    <td><%= order.payment %></td>
-                    <td><%= order.status %></td>
-                </tr>
-            <% }}) %>
-        </table>
-    </form>
-    <h3>Nezaplacené</h3>
-    <table>
-        <tr>
-            <th><input type="checkbox"></th>
-            <th>Odesílatel</th>
-            <th>Datum</th>
-            <th>Číslo</th>
-            <th>Objednavatel</th>
-            <th>Doprava</th>
-            <th>Platba</th>
-            <th>Zaplaceno</th>
-        </tr>
-        <% ordersReserve.forEach((order, index) => { %>
-            <tr>
-                <td><input type="checkbox"></td>
-                <td><%= order.sender %></td>
-                <td><%= order.date %></td>
-                <td><a href="/order?id=<%= 'ordersReserve_' + index %>"><%= order.number %></a></td>
-                <td><%= order.name %></td>
-                <td><%= order.delivery %></td>
-                <td><%= order.payment %></td>
-                <td><%= order.status %></td>
-            </tr>
-        <% }) %>
-    </table>
-    <script type="text/javascript">
-        function toggleCB(id, length) {
-            const status = document.getElementById(id).checked
-            let index = 0
-            while (index < length) {
-                let element = document.getElementById(id + index)
-                if (element !== null) {element.checked = status}
-                index ++
-            }
-        }
-    </script>
-</body>
-</html>
+<%- include('partials/header') %>
+<form method="GET" action="pmg/ppl">
+    <a href="/refresh" class="button button1">Obnovit</a>
+    <a href="/products" class="button button1">Zboží</a>
+    <a href="/return" class="button button1">Vrácení</a>
+    <%- include('partials/tab_orders', {
+            orders: ordersList.filter(order => order.delivery.slice(0,3) == 'PPL' && order.toSend),
+            name: 'PPL',
+            cbTag: 'pp'}
+    ) %>
+    <%- include('partials/tab_orders', {
+            orders: ordersList.filter(order => order.delivery.slice(0,3) == 'Zás' && order.toSend),
+            name: 'Zásilkovna',
+            cbTag: 'za'}
+    ) %>
+    <%- include('partials/tab_orders', {
+            orders: ordersList.filter(order => order.delivery !== "Osobní odběr" && !order.toSend),
+            name: 'Nezaplacené',
+            cbTag: 'nz'}
+    ) %>
+</form>
+<%- include('partials/tab_orders', {
+            orders: ordersList.filter(order => order.delivery === "Osobní odběr"),
+            name: 'Osobní odběr',
+            cbTag: 'oo'}
+    ) %>
+<script type="text/javascript">
+    function toggleCB(cbTag, length) {
+        const status = document.getElementById(cbTag+'m').checked
+        for (i=0; i < length; i++) document.getElementById(cbTag + i).checked = status
+    }
+</script>
+<%- include('partials/footer') %>

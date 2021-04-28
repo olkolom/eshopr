@@ -84,10 +84,8 @@ app.get("/refresh", (req, res)=> {
   dataSource.getOrdersData(config)
   .then( ordersData => {
     req.session.data = {
-      ordersReserve: ordersData.ordersList.filter(order => (!order.toSend || order.delivery == "Osobní odběr")),
-      ordersToSend : ordersData.ordersList.filter(order => order.toSend),
-      productList: ordersData.productList,
-      stores: stores,
+      ...ordersData,
+      stores
     }
     res.redirect('/')
   })
