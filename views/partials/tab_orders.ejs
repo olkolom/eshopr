@@ -1,0 +1,32 @@
+<% if (orders.length > 0) { %>
+<h4><%= name %></h4>
+<table>
+    <tr>
+        <th><input type="checkbox" 
+            id= <%- '"' +cbTag +'m"' %>
+            onchange="toggleCB(<%- "'" +cbTag +"'" %> , <%= orders.length %>)">
+        </th>
+        <th></th>
+        <th>Odesílatel</th>
+        <th>Datum</th>
+        <th>Číslo</th>
+        <th>Objednavatel</th>
+        <th>Doprava</th>
+        <th>Platba</th>
+        <th>Zaplaceno</th>
+    </tr>
+    <% orders.forEach((order, index) => { %>
+        <tr>
+            <td><input type="checkbox" id= <%- '"' +cbTag +index +'"' %> name="ord" value=<%= order.id %>></td>
+            <td><%= index +1 %></td>
+            <td><%= order.sender %></td>
+            <td><%= order.date %></td>
+            <td><a href="order?orderid=<%= order.number %>"><%= order.number %></a></td>
+            <td><%= order.name %></td>
+            <td><%= order.delivery %></td>
+            <td><%= order.payment %></td>
+            <td><%= order.status %></td>
+        </tr>
+    <% }) %>
+</table>
+<% } %>
