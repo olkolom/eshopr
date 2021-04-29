@@ -4,15 +4,9 @@
     <title>Objednávky Primigistore.cz</title>
     <link rel="stylesheet" href="/public/default.css">
     <style>
-        /* 
-        Max width before this PARTICULAR table gets nasty
-        This query will take effect for any screen smaller than 760px
-        and also iPads specifically.
-        */
         @media 
         only screen and (max-width: 414px),
         (min-device-width: 360px) and (max-device-width: 414px)  {
-
             /* Force table to not be like tables anymore */
             table, thead, tbody, th, td, tr { 
                 display: block; 
@@ -60,7 +54,7 @@
     </style>
 </head>
 <body>
-    <h2>Objednávka <%= id %></h2>
+    <h4>Objednávka <%= id %></h4>
     <table>
         <thead>
             <tr>

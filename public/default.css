@@ -10,8 +10,8 @@ table {
   margin:3px 3px;
   font-size: 0.9em;
   font-family: sans-serif;
-  min-width: 400px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
 }
 
 th {
@@ -89,9 +89,15 @@ tr:hover {
   text-align:center;
   transition: all 0.15s;
 }
+
 .button2:hover {
   text-shadow: 0 0 2em rgba(255,255,255,1);
   color:#FFFFFF;
   border-color:#FFFFFF;
   background-color:#d6531f;
+}
+
+.main {
+  max-width: 1000px;
+  min-width: 500px;
 }

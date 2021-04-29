@@ -1,9 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Objednávky Primigistore.cz</title>
-    <link rel="stylesheet" href="/public/default.css">
-<body>
+<%- include('partials/header') %>
     <form method="GET" action="/products">
         <label for="pname">Artikl: </label>
         <input type="text" id="pname" name="item">
@@ -147,5 +142,4 @@
             button = null
         }
     </script>
-</body>
-</html>
+<%- include('partials/footer') %>

@@ -22,6 +22,7 @@
         <a href="/products" class="button button1">Zpátky</a>
     </form>
     <% salesData.forEach(sale => { %>
+        <h4>Celkem <%= sale.totalSum %> Kč</h4>
         <table>
             <thead>
                 <tr>
@@ -46,7 +47,6 @@
                 <% }) %>
             </tbody>
         </table>
-        <p>Celkem <%= sale.totalSum %> Kč</p>
     <% }) %>
 </body>
 </html>

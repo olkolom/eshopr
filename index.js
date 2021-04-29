@@ -126,20 +126,7 @@ app.get("/products", (req, res)=> {
 })
 
 app.get("/order", (req, res)=> {
-  if (req.query.id === undefined && req.query.orderid === undefined) { return res.redirect('/') }
-  let orderData = {items: []}
-  if (req.query.id !== undefined) {
-    let order = req.query.id.split('_')
-    let arrayName = order[0]
-    let orderIndex = parseInt(order[1],10)
-    orderData = req.session.data[arrayName][orderIndex]
-    let items = []
-    req.session.data.productList.forEach(item => {
-      if (item.orderNumber == orderData.number) items.push(item)
-    })
-    orderData.items = items
-    return res.render('order', orderData)
-  }
+  if (req.query.orderid === undefined) { return res.redirect('/') }
   dataSource.getOrder(config, req.query.orderid).then(orderData => res.render('order', orderData))
 })
 
