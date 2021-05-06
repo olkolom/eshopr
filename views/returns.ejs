@@ -1,43 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Vratky Primigistore.cz</title>
-    <link rel="stylesheet" href="/public/default.css">
-</head>
-<body>
-    <script>
-        window.onload = function() {
-            var input = document.getElementById("order").focus();
-        }
-    </script>
-    <h2>Vratky</h2>
-    <form method="GET" action="returns">
-        <label for="order">Objednávka: </label>
-        <input type="text" id="order" name="orderid">
-        <input type="submit" value="Hledat">
-    </form>
-    <p><a href="/return" class="button button1">Zpátky</a></p>
-    <table>
+<%- include('partials/header') %>
+<script>
+    window.onload = function() {
+        var input = document.getElementById("order").focus();
+    }
+</script>
+<h2>Vratky</h2>
+<form method="GET" action="returns">
+    <label for="order">Objednávka: </label>
+    <input type="text" id="order" name="orderid">
+    <input type="submit" value="Hledat">
+</form>
+<p><a href="/return" class="button button1">Zpátky</a></p>
+<table>
+    <tr>
+        <th>Datum</th>
+        <th>Objednávka</th>
+        <th>Ks</th>
+        <th>Častka</th>
+        <th>Vraceno</th>
+        <th>Účet</th>
+        <th>Banka</th>
+    </tr>
+    <% returns.forEach( item => { %>
         <tr>
-            <th>Datum</th>
-            <th>Objednávka</th>
-            <th>Ks</th>
-            <th>Častka</th>
-            <th>Vraceno</th>
-            <th>Účet</th>
-            <th>Banka</th>
+            <td><%= item.date %></td>
+            <td><%= item.order %></td>
+            <td><%= item.totalCount%></td>
+            <td><%= item.totalSum%></td>
+            <td><%= item.datePay%></td>
+            <td><%= item.account%></td>
+            <td><%= item.bank%></td>
         </tr>
-        <% returns.forEach( item => { %>
-            <tr>
-                <td><%= item.date %></td>
-                <td><%= item.order %></td>
-                <td><%= item.totalCount%></td>
-                <td><%= item.totalSum%></td>
-                <td><%= item.datePay%></td>
-                <td><%= item.account%></td>
-                <td><%= item.bank%></td>
-            </tr>
-        <% }) %>
+    <% }) %>
 </table>
-</body>
-</html>
+<%- include('partials/footer') %>

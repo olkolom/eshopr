@@ -1,8 +1,9 @@
 <%- include('partials/header') %>
-<form method="GET" action="pmg/ppl">
+<form method="GET" action="/ppl">
     <a href="/refresh" class="button button1">Obnovit</a>
     <a href="/products" class="button button1">Zboží</a>
     <a href="/return" class="button button1">Vrácení</a>
+    <button class="button button1" action="Submit">PPL</button>
     <%- include('partials/tab_orders', {
             orders: ordersList.filter(order => order.delivery.slice(0,3) == 'PPL' && order.toSend),
             name: 'PPL',

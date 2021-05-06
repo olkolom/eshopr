@@ -35,14 +35,10 @@ function getApiOrders (url, limit, date, after ) {
     })
 }
 
-async function getOrdersData(config) {
+async function getOrdersData(eshopUri) {
     let ordersList= []
     let productList= []
-    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
     try {
-        await mongoClient.connect()
-        const ordersCollection = mongoClient.db('pmg').collection('orders')
-        
         //add fresh and update new, paid and unpaid orders
         const ordersToUpdate = await ordersCollection.find(
             { vyrizeno : { $in: ['c','d','n','g'] } }, 
@@ -51,13 +47,13 @@ async function getOrdersData(config) {
         const firstDbOrderId = ordersToUpdate[ordersToUpdate.length-1]['id_order']
         const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}, projection: { '_id': 0, 'id_order': 1}})
         const lastDbOrderId = lastDbOrder.id_order
-        const lastApiOrder = await getApiOrders(config.eshopUri,1)
+        const lastApiOrder = await getApiOrders(eshopUri,1)
         const lastApiOrderId = lastApiOrder[0].id_order
         let ordersCount = lastApiOrderId - firstDbOrderId + 1
         if (ordersCount > 99) ordersCount = 99 //TODO implement page read from api
         let newOrdersCount = lastApiOrderId - lastDbOrderId
         if (newOrdersCount > 99) newOrdersCount = 99 //TODO implement page read from api
-        let apiOrders = await getApiOrders(config.eshopUri, ordersCount)
+        let apiOrders = await getApiOrders(eshopUri, ordersCount)
         const freshApiOrders = apiOrders.slice(0, newOrdersCount)
         if (freshApiOrders.length > 0) {
             let result = await ordersCollection.insertMany(freshApiOrders)
@@ -91,6 +87,32 @@ async function getOrdersData(config) {
                 && order.vyrizeno == "g") status='Ano'
             if (order.payment.nazev_platba == "Platba dobírkou" || status=='Ano') toSend = true
 
+            //Collect PPL data
+            let adress = order.customer.delivery_information.street
+            adress.trim()
+            let adrArr = adress.split(' ')
+            let dom = adrArr.pop()
+            adress = adrArr.join(' ')
+            let phone = order.customer.delivery_information.phone
+            if (phone.length !== 9) {
+                phone = phone.slice(phone.length - 9, phone.length)}
+            let dobirka = ''
+            if (order.payment.nazev_platba == "Platba dobírkou") {
+                dobirka = order.total_per_vat['21'].price_with_vat
+            }
+            let pplData = {
+                'vs': order.number,
+                'poznamka': order.customer.delivery_information.note,
+                'osoba': order.customer.delivery_information.name,
+                'telefon': phone,
+                'email': order.customer.delivery_information.email,
+                'ulice': adress,
+                'dom': dom,
+                'mesto': order.customer.delivery_information.city,
+                'psc': order.customer.delivery_information.zip,
+                'dobirka': dobirka,
+            }
+
             order.row_list.forEach(product => {
                 productList.push({
                     orderId: order.id_order,
@@ -110,16 +132,15 @@ async function getOrdersData(config) {
                 name: order.customer.delivery_information.name,
                 delivery: order.delivery.nazev_postovne.split(' - ')[0], 
                 payment: order.payment.nazev_platba,
-                status: status,
+                status,
                 date: order.origin.date.date.slice(5,16),
-                toSend: toSend,
+                toSend,
                 sender: '',
+                pplData
             })
         })
         
         //assign stores and action 'n' or 'u'
-        const inventoryCollection = mongoClient.db('pmg').collection('variants')
-        const salesCollection = mongoClient.db('pmg').collection('sales')
         let i= productList.length
         while (i>0) {
             i--
@@ -187,7 +208,6 @@ async function getOrdersData(config) {
         })
 
         //add returns to productList
-        const returnsCollection = mongoClient.db('pmg').collection('returns')
         const returns = returnsCollection.find({'items.saved': false})
         await returns.forEach(ret => {
             ret.items.forEach(item => {
@@ -202,18 +222,12 @@ async function getOrdersData(config) {
 
     } catch(err) {
         console.log('Get orders data error:' + err)
-    } finally { mongoClient.close() }
-    return { 
-        ordersList: ordersList,
-        productList: productList,
     }
+    return { ordersList, productList, }
 } 
 
-async function getOrder(config, orderID) {
-    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+async function getOrder(orderID) {
     try {
-        await mongoClient.connect()
-        const ordersCollection = mongoClient.db('pmg').collection('orders')
         const order = await ordersCollection.findOne({number: orderID})
         orderData = {
                 id: order.id_order,
@@ -237,8 +251,6 @@ async function getOrder(config, orderID) {
                 count: product.count,
             })
         })
-        const inventoryCollection = mongoClient.db('pmg').collection('variants')
-        const salesCollection = mongoClient.db('pmg').collection('sales')
         for (i=0; i<items.length; i++) {
             let product = items[i]
             let storeID = "Neni"
@@ -279,12 +291,11 @@ async function getOrder(config, orderID) {
         orderData.items = items
     } catch(err) {
         console.log('Get order data error:' + err.message)
-    } finally { mongoClient.close() }
+    }
     return orderData
 } 
 
-async function saveReturn(config, data) {
-    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+async function saveReturn(data) {
     if (data.delivery === undefined) { data.delivery = 0 }
     else { data.delivery = data.delivery * -1 }
     if (data.payment === undefined) { data.payment = 0 }
@@ -310,37 +321,24 @@ async function saveReturn(config, data) {
     newReturn.totalPriceDif = dif
     newReturn.totalSum = newReturn.totalSum + sum
     try {
-        await mongoClient.connect()
-        const returnsCollection = mongoClient.db('pmg').collection('returns')
         await returnsCollection.insertOne(newReturn)
     } catch(err) {
         console.log('Save return data error:' + err.message)
-    } finally { mongoClient.close() }
+    }
     return newReturn
 } 
 
-async function getReturns(config, orderId) {
+async function getReturns() {
     let returns
-    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
     try {
-        await mongoClient.connect()
-        const returnsCollection = mongoClient.db('pmg').collection('returns')
-        returns = await returnsCollection
-        .find(
-            {}, 
-            {
-                limit: 100,
-                sort: {date: -1}
-            }
-        ).toArray()
+        returns = await returnsCollection.find().limit(100).sort({date: -1}).toArray()
     } catch(err) {
         console.log('Get returns data error:' + err.message)
-    } finally { mongoClient.close() }
-    return {returns: returns}
+    }
+    return {returns}
 } 
 
-async function saveSale(config, items, storeID) {
-    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+async function saveSale(items, storeID) {
     let date = new Date()
     let newSale = {date: date.toISOString().slice(0,10)}
     
@@ -352,11 +350,10 @@ async function saveSale(config, items, storeID) {
             if (item.productId.length> 7 && item.productId[1]< 7) 
                 if (notInAction.find(i=> i==item.productID) === undefined ) apparel.push(index)
         })
-        if (apparel.length > 2) apparel.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * 0.8))
+        //if (apparel.length > 2) 
+        apparel.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * 0.8))
     }
     try {
-        await mongoClient.connect()
-        const salesCollection = mongoClient.db('pmg').collection('sales')
         let totalSum = 0
         let totalCount = 0
         let totalPriceDif = 0
@@ -376,7 +373,7 @@ async function saveSale(config, items, storeID) {
             totalCount = totalCount + item.count
             totalPriceDif  = totalPriceDif + item.price - item.storePrice
         })
-        newSale.totalSum = totalSum
+        newSale.totalSum = totalSum 
         newSale.totalCount = totalCount
         newSale.totalPriceDif = totalPriceDif
         newSale.storeID = storeID
@@ -384,41 +381,32 @@ async function saveSale(config, items, storeID) {
         await salesCollection.insertOne(newSale)
 
         //update 'saved' status at returns
-        const returnsCollection = mongoClient.db('pmg').collection('returns')
         for (let i=0; i<returnsIndexes.length; i++) {
             let item = items[returnsIndexes[i]]
-            await returnsCollection.updateOne({order: item.orderNumber, items: {$elemMatch: { productId: item.productId, size: item.size }}},{ $set: { "items.$.saved" : true }})
+            await returnsCollection.updateOne({order: item.orderNumber, items: {$elemMatch: { productId: item.productId, size: item.size }}},{ $set: { "items.$.saved" : true, "items.$.saveDate": date.toISOString().slice(0,10) }})
         }
 
     } catch(err) {
         console.log('Save sale data error:' + err.message)
-    } finally { mongoClient.close() }
+    }
     return newSale
 } 
 
-async function getSales(config, storeID, date) {
-    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+async function getSales(storeID, date) {
     let sales = []
     let daySalesTotal = 0
     try {
-        await mongoClient.connect()
-        const salesCollection = mongoClient.db('pmg').collection('sales')
         sales = await salesCollection.find({ date: date, storeID: storeID}).toArray()
         if (sales.length > 0) sales.forEach(sale => {daySalesTotal = daySalesTotal + sale.totalSum})
     } catch(err) {
         console.log('Get sales data error:' + err.message)
-    } finally { mongoClient.close() }
-    return {salesData : sales, daySales: daySalesTotal, date: date, id: storeID }
+    }
+    return {salesData : sales, daySales: daySalesTotal, date, id: storeID }
 } 
 
-
-async function getOrdersByItem (config, item) {
-    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+async function getOrdersByItem (item) {
     let orders = []
     try {
-        await mongoClient.connect()
-        const inventoryCollection = mongoClient.db('pmg').collection('variants')
-        const ordersCollection = mongoClient.db('pmg').collection('orders')
         let itemID
         if (item.length == 13) {
             const ean = parseInt(item, 10)
@@ -452,8 +440,7 @@ async function getOrdersByItem (config, item) {
             },
             sort: [['id_order', 1]]
           }
-            const selection = ordersCollection.find(dbQuery, dbOptions)
-            await selection.forEach(order => {
+            await ordersCollection.find(dbQuery, dbOptions).forEach(order => {
                 const statusVariants = {
                     "n": "Nová",
                     "a": "Vyřízená",
@@ -477,16 +464,13 @@ async function getOrdersByItem (config, item) {
         }
     } catch(err) {
         console.log('Get orders data error:' + err.message)
-    } finally { mongoClient.close() }
-    return {orders : orders}
+    }
+    return { orders }
 } 
 
-async function getItem (config, item) {
-    const mongoClient = new MongoClient(config.mongoUri, { useUnifiedTopology: true })
+async function getItem (item) {
     let searchedItem = null
     try {
-        await mongoClient.connect()
-        const inventoryCollection = mongoClient.db('pmg').collection('variants')
         if (item.length == 13) {
             const ean = parseInt(item, 10)
             searchedItem = await inventoryCollection.findOne({ ean: ean })
@@ -498,17 +482,27 @@ async function getItem (config, item) {
         }
     } catch(err) {
         console.log('Get item data error:' + err.message)
-    } finally { mongoClient.close() }
+    }
     return searchedItem
-} 
-
-module.exports = {
-    getOrdersData : getOrdersData,
-    saveSale : saveSale,
-    saveReturn : saveReturn,
-    getReturns : getReturns,
-    getSales : getSales,
-    getOrdersByItem : getOrdersByItem,
-    getOrder: getOrder,
-    getItem: getItem,
 }
+
+var ordersCollection, inventoryCollection, salesCollection, returnsCollection
+
+function init (mongoUri) {
+    const mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true })
+    if (mongoClient.isConnected() === false) {
+        mongoClient.connect().then(() => {
+            console.log('Connected to DB')
+            const db = mongoClient.db('pmg')
+            ordersCollection = db.collection('orders')
+            inventoryCollection = db.collection('variants')
+            salesCollection = db.collection('sales')
+            returnsCollection = db.collection('returns')
+        })
+    }
+    return {
+        getOrdersData, saveSale, saveReturn, getReturns, getSales, getOrdersByItem, getOrder, getItem
+    }
+}
+
+module.exports = { init }

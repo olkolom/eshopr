@@ -6,8 +6,9 @@ const MongoDBStore = require('connect-mongodb-session')(session)
 const ejs = require('ejs')
 const json2csv = require('json2csv')
 const fs = require('fs')
-const dataSource = require ('./getorders.js')
+const dbModule = require ('./getorders.js')
 const users = require('./users.json')
+const { url } = require('inspector')
 
 dotenv.config()
 const config = {
@@ -18,8 +19,23 @@ const config = {
   port: process.env.PORT,
   mongoUri: process.env.MONGO_URI,
   eshopUri: process.env.ESHOP_URI,
+  url: process.env.URL,
 }
 
+var cookieSet = { maxAge: 43200000 }
+if (config.url !== undefined) cookieSet = {
+  ...cookieSet,
+  secure: true,
+  sameSite: true,
+  domain: config.url,
+  path: "/"
+}
+
+const csvParser = new json2csv.Parser({
+  fields : ['vs','poznamka','osoba','telefon','email','ulice','dom','mesto','psc','dobirka']
+})
+
+const dataSource = dbModule.init(config.mongoUri)
 const app = express()
 
 const sessionStore = new MongoDBStore({
@@ -59,11 +75,18 @@ app.get('/auth', (req, res) => {
       const oauth2 = google.oauth2({ version: 'v2', auth })
       oauth2.userinfo.get()
       .then(userinfo => {
+        let date = new Date()
+        let loginTime = date.toISOString()
         if (users.allowedUsers.includes(userinfo.data.email)) {
           req.session.isAuthed = true
           req.session.user = userinfo.data.email
+          req.session.loginTime = loginTime
+          console.log(`${userinfo.data.email} have logged in at ${loginTime}`)
           res.redirect('/')
-        } else res.send('Nepovolený přístup')
+        } else {
+          console.log(`${userinfo.data.email} have tried to log in at ${loginTime}`)
+          res.send('Nepovolený přístup')
+        }
       })
     })
     .catch(() => res.send('Something went wrong'))
@@ -81,17 +104,20 @@ app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/auth'
 
 app.get("/refresh", (req, res)=> {
   const stores = users[req.session.user]
-  dataSource.getOrdersData(config)
+  console.log('Refreshing data')
+  req.session.updating = true
+  dataSource.getOrdersData(config.eshopUri)
   .then( ordersData => {
     req.session.data = {
       ...ordersData,
       stores
     }
+    req.session.updating = false
     res.redirect('/')
   })
 })
 
-app.use((req, res, next) => (req.session.data !== undefined && req.path !== '/refresh') ? next() : res.redirect('/refresh'))
+app.use((req, res, next) => {if (req.session.data !== undefined && req.session.updating !== true) { next() } else {console.log('No Data', req.session.data); res.redirect('/refresh') }})
 
 app.get("/", (req, res)=> {
   res.render('index', req.session.data )
@@ -107,7 +133,7 @@ app.get("/products", (req, res)=> {
     req.session.data.productList[index].action = type
     return res.render('products', req.session.data )
   }
-  dataSource.getItem(config, req.query.item).then( item => {
+  dataSource.getItem(req.query.item).then( item => {
     if (item !== null) {
       let reversedIndex = req.session.data.productList.slice().reverse().findIndex(product => (
         product.productId === item.model 
@@ -127,7 +153,7 @@ app.get("/products", (req, res)=> {
 
 app.get("/order", (req, res)=> {
   if (req.query.orderid === undefined) { return res.redirect('/') }
-  dataSource.getOrder(config, req.query.orderid).then(orderData => res.render('order', orderData))
+  dataSource.getOrder(req.query.orderid).then(orderData => res.render('order', orderData))
 })
 
 app.get("/sell", (req, res)=> {
@@ -140,7 +166,7 @@ app.get("/sell", (req, res)=> {
       req.session.data.productList[index].action = 'u'
     }
   })
-  if (items.length !== 0) dataSource.saveSale(config, items, storeID)
+  if (items.length !== 0) dataSource.saveSale(items, storeID)
   res.redirect('/products')
 })
 
@@ -151,20 +177,20 @@ app.get("/sales", (req, res)=> {
     date = new Date()
     date = date.toISOString().slice(0,10)
   }
-  dataSource.getSales(config, req.query.id, date).then(salesData => res.render('sales', salesData))
+  dataSource.getSales(req.query.id, date).then(salesData => res.render('sales', salesData))
 })
 
 app.get("/return", (req, res)=> {
-  if (req.query.item !== undefined ) { dataSource.getOrdersByItem(config, req.query.item).then( orders => res.render('ret_input',orders))}
+  if (req.query.item !== undefined ) { dataSource.getOrdersByItem(req.query.item).then( orders => res.render('ret_input',orders))}
   else if (req.query.orderid === undefined) { return res.render('ret_input', {orders:[]}) }
-  else dataSource.getOrder(config, req.query.orderid).then(orderData => res.render('ret_form', orderData))
+  else dataSource.getOrder(req.query.orderid).then(orderData => res.render('ret_form', orderData))
 })
 
 app.get("/retsave", (req, res)=> {
   if (req.query.order === undefined ) {return res.redirect('/return')}
   if (req.query.item === undefined ) {return res.send('Žadné zboží')}
   if (req.query.acc === "" ) {return res.send('Není číslo účtu')}
-  dataSource.getOrder(config, req.query.order)
+  dataSource.getOrder(req.query.order)
   .then(orderData => {
     let items = []
     if (!Array.isArray(req.query.item)) items.push(orderData.items[req.query.item])
@@ -178,13 +204,31 @@ app.get("/retsave", (req, res)=> {
       items: items,
     }
   })
-  .then(data => dataSource.saveReturn(config, data))
+  .then(data => dataSource.saveReturn(data))
   .then(data => res.redirect("/returns"))
 })
 
 app.get("/returns", (req, res)=> {
   if (req.query.orderid !== undefined ) {}
-  else dataSource.getReturns(config).then(data => res.render('returns', data))
+  else dataSource.getReturns().then(data => res.render('returns', data))
+})
+
+app.get("/ppl", (req, res, next)=> {
+  if (req.query.ord !== undefined ) {
+    let orderNumbers
+    Array.isArray(req.query.ord) ? orderNumbers=req.query.ord : orderNumbers=[req.query.ord]
+    const ordersPPL = []
+    orderNumbers.forEach(orderNumber => {
+      let order = req.session.data.ordersList.find(item => item.id == orderNumber)
+      ordersPPL.unshift(order.pplData)
+    })
+    const csv = csvParser.parse(ordersPPL)
+    const file = __dirname + '/public/ppl.csv'
+    fs.writeFile(file, csv, err => {
+        if (err) next(err)
+        res.download(file)
+    })
+  } else res.redirect("/")
 })
 
 app.listen(config.port, () => {
