@@ -352,7 +352,7 @@ async function saveSale(items, storeID) {
                 if (item.productId[1]<7 || inAction.find(i=> i==item.productID) !== undefined) 
                     actionIndexes.push(index)
             //shoes
-            if (item.productType !== 'Sandály') actionIndexes.push(index)
+            if (item.productId.length === 7 && item.productType !== 'Sandály') actionIndexes.push(index)
         })
         //if (actionIndexes.length > 2) 
         actionIndexes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducer))
