@@ -22,6 +22,8 @@ const config = {
   url: process.env.URL,
 }
 
+const app = express()
+
 var cookieSet = { maxAge: 43200000 }
 if (config.url !== undefined) {
   app.set('trust proxy', 1)
@@ -39,7 +41,7 @@ const csvParser = new json2csv.Parser({
 })
 
 const dataSource = dbModule.init(config.mongoUri)
-const app = express()
+
 
 const sessionStore = new MongoDBStore({
   uri: config.mongoUri,
