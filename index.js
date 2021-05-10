@@ -23,12 +23,15 @@ const config = {
 }
 
 var cookieSet = { maxAge: 43200000 }
-if (config.url !== undefined) cookieSet = {
-  ...cookieSet,
-  secure: true,
-  sameSite: true,
-  domain: config.url,
-  path: "/"
+if (config.url !== undefined) {
+  app.set('trust proxy', 1)
+  cookieSet = {
+    ...cookieSet,
+    secure: true,
+    sameSite: true,
+    domain: config.url,
+    path: "/"
+  }
 }
 
 const csvParser = new json2csv.Parser({
@@ -53,11 +56,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   store: sessionStore,
-  cookie: { 
-    //secure: true,
-    maxAge: 43200000,
-    //sameSite: true,
-   },
+  cookie: cookieSet,
 }))
 
 const auth = new google.auth.OAuth2(
@@ -113,7 +112,7 @@ app.get("/refresh", (req, res)=> {
       stores
     }
     req.session.updating = false
-    res.redirect('/')
+    return res.redirect('/')
   })
 })
 
