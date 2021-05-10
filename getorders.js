@@ -78,7 +78,6 @@ async function getOrdersData(eshopUri) {
         const ordersSelection = await ordersCollection.find(dbQuery, dbOptions).toArray()
         console.log(ordersSelection.length)
         for (orderIndex=0; orderIndex < ordersSelection.length; orderIndex++) {
-            console.log('1')
             const order = ordersSelection[orderIndex]
             let status = ''
             let toSend = false
@@ -127,7 +126,6 @@ async function getOrdersData(eshopUri) {
                 //temporary solution to check more then one same item in orders
                 let itemQuantity = 1
                 let backwCounter = productList.length - 1
-                console.log('2')
                 while (backwCounter >= 0 ) {
                     let prevItem = productList[backwCounter]
                     if (productId === prevItem.productId && size === prevItem.size) itemQuantity++
@@ -165,7 +163,6 @@ async function getOrdersData(eshopUri) {
                     storeID = sold.storeID
                     saleDate = sold.date.slice(-5)
                 }
-                console.log('3')
                 productList.push({
                     orderId: order.id_order,
                     orderNumber: order.number,

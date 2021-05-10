@@ -25,6 +25,7 @@ const config = {
 const app = express()
 
 var cookieSet = { maxAge: 43200000 }
+/*
 if (config.url !== undefined) {
   app.set('trust proxy', 1)
   cookieSet = {
@@ -35,6 +36,7 @@ if (config.url !== undefined) {
     path: "/"
   }
 }
+*/
 
 const csvParser = new json2csv.Parser({
   fields : ['vs','poznamka','osoba','telefon','email','ulice','dom','mesto','psc','dobirka']
