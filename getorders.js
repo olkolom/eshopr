@@ -75,7 +75,11 @@ async function getOrdersData(eshopUri) {
         //read and process new, paid and unpaid orders
         const dbQuery = { vyrizeno : { $in: ['c','d','n','g'] } }
         const dbOptions = { sort: {'id_order': -1} }
-        await ordersCollection.find(dbQuery, dbOptions).forEach(order => {
+        const ordersSelection = await ordersCollection.find(dbQuery, dbOptions).toArray()
+        console.log(ordersSelection.length)
+        for (orderIndex=0; orderIndex < ordersSelection.length; orderIndex++) {
+            console.log('1')
+            const order = ordersSelection[orderIndex]
             let status = ''
             let toSend = false
             if (order.gateway_payment_state && order.gateway_payment_state != "paid") status='Ne'
@@ -112,20 +116,74 @@ async function getOrdersData(eshopUri) {
                 'psc': order.customer.delivery_information.zip,
                 'dobirka': dobirka,
             }
-
-            order.row_list.forEach(product => {
+            
+            //productlist + assign stores and action 'n' or 'u'
+            for (i=0; i<order.row_list.length; i++) {
+                const product = order.row_list[i]
+                let productId = product.product_number
+                let size = product.variant_description.split(' ')[2]
+                if (typeof(size) == "number" ) {size = size.toString()}
+                
+                //temporary solution to check more then one same item in orders
+                let itemQuantity = 1
+                let backwCounter = productList.length - 1
+                console.log('2')
+                while (backwCounter >= 0 ) {
+                    let prevItem = productList[backwCounter]
+                    if (productId === prevItem.productId && size === prevItem.size) itemQuantity++
+                    backwCounter--
+                }
+                //also some code  at if code below
+                let storeID = "Neni"
+                let storePrice = 0
+                let stock = await inventoryCollection.findOne({ model: productId, size })
+                if (stock !== null) {
+                    let i=0
+                    let founded=false 
+                    while (!founded && i < stock.inventory.length) {
+                        if (stock.inventory[i].quantity > 0) {
+                            if (stock.inventory[i].quantity - itemQuantity >= 0) {
+                                founded=true
+                                storeID=stock.inventory[i].id
+                                storePrice=stock.inventory[i].price
+                            } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
+                        }
+                        i++
+                    }
+                } else {storeID = "Nové"}
+                let action = 'n'
+                let saleDate = ""
+                let sold = await salesCollection.findOne({
+                    items: {$elemMatch: { 
+                        orderId: order.number, 
+                        productId,
+                        size,
+                    }}
+                })
+                if (sold !== null) { 
+                    action = 'u'
+                    storeID = sold.storeID
+                    saleDate = sold.date.slice(-5)
+                }
+                console.log('3')
                 productList.push({
                     orderId: order.id_order,
                     orderNumber: order.number,
                     productType: product.product_name,
-                    productId: product.product_number,
-                    size: product.variant_description.split(' ')[2],
+                    productId,
+                    size,
                     price: product.price_total_with_vat,
                     count: product.count,
                     sale: toSend,
-                    delivery: order.delivery.nazev_postovne.split(' - ')[0]
+                    delivery: order.delivery.nazev_postovne.split(' - ')[0],
+                    date: saleDate,
+                    storeID,
+                    action,
+                    storePrice,
                 })
-            })
+            }
+
+            //ordersList
             ordersList.push({
                 id: order.id_order,
                 number: order.number,
@@ -138,64 +196,8 @@ async function getOrdersData(eshopUri) {
                 sender: '',
                 pplData
             })
-        })
-        
-        //assign stores and action 'n' or 'u'
-        let i= productList.length
-        while (i>0) {
-            i--
-            let product = productList[i]
-            let storeID = "Neni"
-            let storePrice = 0
-            let action = 'n'
-            let size = product.size
-            if (typeof(size) == "number" ) {size = size.toString()}
-            let stock = await inventoryCollection.findOne({
-                model: product.productId,
-                size: product.size,
-            })
-            //temporary solution to check more then one same item in orders
-            let itemQuantity = 1
-            let backwCounter = i+1
-            while (backwCounter < productList.length) {
-                let prevItem = productList[backwCounter]
-                if (product.productId === prevItem.productId && product.size === prevItem.size) itemQuantity++
-                backwCounter++
-            }
-            //also some code  at if code below
-            if (stock !== null) {
-                let i=0
-                let founded=false 
-                while (!founded && i < stock.inventory.length) {
-                    if (stock.inventory[i].quantity > 0) {
-                        if (stock.inventory[i].quantity - itemQuantity >= 0) {
-                            founded=true
-                            storeID=stock.inventory[i].id
-                            storePrice=stock.inventory[i].price
-                        } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
-                    }
-                    i++
-                }
-            } else {storeID = "Nové"}
-            let sold = await salesCollection.findOne({
-                items: {$elemMatch: { 
-                    orderId: product.orderNumber, 
-                    productId: product.productId,
-                    size: product.size,
-                }}
-            })
-            let saleDate = ""
-            if (sold !== null) { 
-                action = 'u'
-                storeID = sold.storeID
-                saleDate = sold.date.slice(-5)
-            }
-            productList[i].date = saleDate
-            productList[i].storeID = storeID
-            productList[i].action = action
-            productList[i].storePrice = storePrice
         }
-
+        
         //define sender
         productList.forEach(item => {
             const orderIndex = ordersList.findIndex(order => order.number == item.orderNumber)
