@@ -1,0 +1,41 @@
+<% if (products.length > 0) { %>
+<h4><%= name %></h4>
+<table>
+    <thead>
+        <tr>
+            <th>Akce</th>
+            <th>Číslo</th>
+            <th>Objednávka</th>
+            <th>Photo</th>
+            <th>Typ</th>
+            <th>Artikl</th>
+            <th>Velikost</th>
+            <th>Cena</th>
+            <th>Ks</th>
+            <th>Prodejna</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% products.forEach((item, index) => { %>
+            <% if(item.ret) { %>
+            <tr style="color: red">
+            <% } else { %>
+            <tr>
+            <% } %>
+                <td>
+                    <button class="button button2" value=<%= action+index %> name="action" type="submit">Vrátit</button>
+                </td>
+                <td><%= index +1 %></td>
+                <td><a href="/order?orderid=<%= item.orderNumber %>"><%= item.orderNumber %></a></td>
+                <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 width=75></img></td>
+                <td><%= item.productType %></td>
+                <td><%= item.productId %></td>
+                <td><%= item.size %></td>
+                <td><%= item.storePrice %></td>
+                <td><%= item.count %></td>
+                <td><%= item.storeID %></td>
+            </tr>
+        <% }) %>
+    </tbody>
+</table>
+<% } %>
