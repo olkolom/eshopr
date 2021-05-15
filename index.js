@@ -8,7 +8,6 @@ const json2csv = require('json2csv')
 const fs = require('fs')
 const dbModule = require ('./getorders.js')
 const users = require('./users.json')
-const { url } = require('inspector')
 
 dotenv.config()
 const config = {
@@ -24,26 +23,11 @@ const config = {
 
 const app = express()
 
-var cookieSet = { maxAge: 43200000 }
-/*
-if (config.url !== undefined) {
-  app.set('trust proxy', 1)
-  cookieSet = {
-    ...cookieSet,
-    secure: true,
-    sameSite: true,
-    domain: config.url,
-    path: "/"
-  }
-}
-*/
-
 const csvParser = new json2csv.Parser({
   fields : ['vs','poznamka','osoba','telefon','email','ulice','dom','mesto','psc','dobirka']
 })
 
 const dataSource = dbModule.init(config.mongoUri)
-
 
 const sessionStore = new MongoDBStore({
   uri: config.mongoUri,
@@ -54,6 +38,12 @@ app.set('views', './views')
 app.set('view engine', 'ejs')
 
 app.use('/public', express.static('public'))
+
+const cookieSet = { maxAge: 43200000 }
+if (config.url !== undefined) {
+  app.set('trust proxy', 1)
+  cookieSet.secure = true
+}
 
 app.use(session({
   secret: config.sessionSecret,
@@ -107,7 +97,7 @@ app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/auth'
 
 app.get("/refresh", (req, res)=> {
   const stores = users[req.session.user]
-  console.log('Refreshing data')
+  console.log('Processing data...')
   req.session.updating = true
   dataSource.getOrdersData(config.eshopUri)
   .then( ordersData => {
@@ -120,7 +110,13 @@ app.get("/refresh", (req, res)=> {
   })
 })
 
-app.use((req, res, next) => {if (req.session.data !== undefined && req.session.updating !== true) { next() } else {console.log('No Data', req.session.data); res.redirect('/refresh') }})
+app.use((req, res, next) => {
+  if (req.session.updating) return;
+  if (req.session.data === undefined) {
+    console.log('New session. Loading order data.')
+    res.redirect('/refresh')
+  } else next()  
+})
 
 app.get("/", (req, res)=> {
   res.render('index', req.session.data )

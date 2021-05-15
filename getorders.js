@@ -76,7 +76,6 @@ async function getOrdersData(eshopUri) {
         const dbQuery = { vyrizeno : { $in: ['c','d','n','g'] } }
         const dbOptions = { sort: {'id_order': -1} }
         const ordersSelection = await ordersCollection.find(dbQuery, dbOptions).toArray()
-        console.log(ordersSelection.length)
         for (orderIndex=0; orderIndex < ordersSelection.length; orderIndex++) {
             const order = ordersSelection[orderIndex]
             let status = ''
@@ -122,62 +121,69 @@ async function getOrdersData(eshopUri) {
                 let productId = product.product_number
                 let size = product.variant_description.split(' ')[2]
                 if (typeof(size) == "number" ) {size = size.toString()}
-                
-                //temporary solution to check more then one same item in orders
-                let itemQuantity = 1
-                let backwCounter = productList.length - 1
-                while (backwCounter >= 0 ) {
-                    let prevItem = productList[backwCounter]
-                    if (productId === prevItem.productId && size === prevItem.size) itemQuantity++
-                    backwCounter--
-                }
-                //also some code  at if code below
-                let storeID = "Neni"
-                let storePrice = 0
-                let stock = await inventoryCollection.findOne({ model: productId, size })
-                if (stock !== null) {
-                    let i=0
-                    let founded=false 
-                    while (!founded && i < stock.inventory.length) {
-                        if (stock.inventory[i].quantity > 0) {
-                            if (stock.inventory[i].quantity - itemQuantity >= 0) {
-                                founded=true
-                                storeID=stock.inventory[i].id
-                                storePrice=stock.inventory[i].price
-                            } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
-                        }
-                        i++
+                //if quantity is >1 push item 'quantity' times
+                let orderQuantity = product.count
+                while (orderQuantity>0) {
+
+                    //temporary solution to check more then one same item in orders
+                    let itemQuantity = 1
+                    let backwCounter = productList.length - 1
+                    while (backwCounter >= 0 ) {
+                        let prevItem = productList[backwCounter]
+                        if (productId === prevItem.productId && size === prevItem.size) itemQuantity++
+                        backwCounter--
                     }
-                } else {storeID = "Nové"}
-                let action = 'n'
-                let saleDate = ""
-                let sold = await salesCollection.findOne({
-                    items: {$elemMatch: { 
-                        orderId: order.number, 
+                    //also some code  at if code below
+                    let storeID = "Neni"
+                    let storePrice = 0
+                    let stock = await inventoryCollection.findOne({ model: productId, size })
+                    if (stock !== null) {
+                        let i=0
+                        let founded=false 
+                        while (!founded && i < stock.inventory.length) {
+                            if (stock.inventory[i].quantity > 0) {
+                                if (stock.inventory[i].quantity - itemQuantity >= 0) {
+                                    founded=true
+                                    storeID=stock.inventory[i].id
+                                    storePrice=stock.inventory[i].price
+                                } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
+                            }
+                            i++
+                        }
+                    } else {storeID = "Nové"}
+                    let action = 'n'
+                    let saleDate = ""
+                    let sold = await salesCollection.findOne({
+                        storeID,
+                        items: {$elemMatch: { 
+                            orderId: order.number, 
+                            productId,
+                            size,
+                        }}
+                    })
+                    if (sold !== null) { 
+                        action = 'u'
+                        //storeID = sold.storeID
+                        saleDate = sold.date.slice(-5)
+                    }
+                
+                    productList.push({
+                        orderId: order.id_order,
+                        orderNumber: order.number,
+                        productType: product.product_name,
                         productId,
                         size,
-                    }}
-                })
-                if (sold !== null) { 
-                    action = 'u'
-                    storeID = sold.storeID
-                    saleDate = sold.date.slice(-5)
+                        price: product.price_per_unit_with_vat,
+                        count: 1, //always 1 instead of product.count,
+                        sale: toSend,
+                        delivery: order.delivery.nazev_postovne.split(' - ')[0],
+                        date: saleDate,
+                        storeID,
+                        action,
+                        storePrice,
+                    })
+                    orderQuantity--
                 }
-                productList.push({
-                    orderId: order.id_order,
-                    orderNumber: order.number,
-                    productType: product.product_name,
-                    productId,
-                    size,
-                    price: product.price_total_with_vat,
-                    count: product.count,
-                    sale: toSend,
-                    delivery: order.delivery.nazev_postovne.split(' - ')[0],
-                    date: saleDate,
-                    storeID,
-                    action,
-                    storePrice,
-                })
             }
 
             //ordersList
