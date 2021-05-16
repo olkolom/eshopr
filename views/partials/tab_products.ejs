@@ -23,7 +23,20 @@
             <tr>
             <% } %>
                 <td>
-                    <button class="button button2" value=<%= action+index %> name="action" type="submit">Vrátit</button>
+                    <% if(action === 'p_'){ %>
+                        <% if(item.sale && item.action !== 'u'){ %>
+                            <button class="button button2" value=<%= action +item.index %> name="action" type="submit">Prodej</button>
+                        <% } else if (item.action !== 'u') {%>
+                            Rezervace
+                        <% } else if (item.delivery !== "Osobní odběr") { %>
+                            Uloženo v BS <%= item.date %>
+                        <% } else {%>
+                            Uloženo v BS <%= item.date %> (Os.od.)
+                        <% } %>
+                    <% } %>
+                    <% if(action === 'n_'){ %>
+                        <button class="button button2" value=<%= action +item.index %> name="action" type="submit">Vrátit</button>
+                    <% } %>
                 </td>
                 <td><%= index +1 %></td>
                 <td><a href="/order?orderid=<%= item.orderNumber %>"><%= item.orderNumber %></a></td>

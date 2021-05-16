@@ -38,6 +38,7 @@ function getApiOrders (url, limit, date, after ) {
 async function getOrdersData(eshopUri) {
     let ordersList= []
     let productList= []
+    let productIndex= 0
     try {
         //add fresh and update new, paid and unpaid orders
         const ordersToUpdate = await ordersCollection.find(
@@ -125,48 +126,54 @@ async function getOrdersData(eshopUri) {
                 let orderQuantity = product.count
                 while (orderQuantity>0) {
 
-                    //temporary solution to check more then one same item in orders
+                    //temporary solution to check more then one same item in orders, itemQuantity is for unsold items
                     let itemQuantity = 1
+                    let sameOrderQuantity = 1
                     let backwCounter = productList.length - 1
                     while (backwCounter >= 0 ) {
                         let prevItem = productList[backwCounter]
-                        if (productId === prevItem.productId && size === prevItem.size) itemQuantity++
+                        if (productId === prevItem.productId && size === prevItem.size) {
+                            if (prevItem.action !== 'u') itemQuantity++
+                            if (prevItem.orderNumber === order.number) sameOrderQuantity++
+                        }
                         backwCounter--
                     }
                     //also some code  at if code below
                     let storeID = "Neni"
                     let storePrice = 0
-                    let stock = await inventoryCollection.findOne({ model: productId, size })
-                    if (stock !== null) {
-                        let i=0
-                        let founded=false 
-                        while (!founded && i < stock.inventory.length) {
-                            if (stock.inventory[i].quantity > 0) {
-                                if (stock.inventory[i].quantity - itemQuantity >= 0) {
-                                    founded=true
-                                    storeID=stock.inventory[i].id
-                                    storePrice=stock.inventory[i].price
-                                } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
-                            }
-                            i++
-                        }
-                    } else {storeID = "Nové"}
                     let action = 'n'
                     let saleDate = ""
-                    let sold = await salesCollection.findOne({
-                        storeID,
+                    //check if sold
+                    let sold = await salesCollection.find({
                         items: {$elemMatch: { 
                             orderId: order.number, 
                             productId,
                             size,
                         }}
-                    })
-                    if (sold !== null) { 
+                    }).toArray()
+                    if (sold.length > 0 && sold.length >= sameOrderQuantity) { 
                         action = 'u'
-                        //storeID = sold.storeID
-                        saleDate = sold.date.slice(-5)
+                        storeID = sold[sameOrderQuantity-1].storeID
+                        saleDate = sold[sameOrderQuantity-1].date.slice(-5)
+                    } else {
+                        //find candidate to sale
+                        let stock = await inventoryCollection.findOne({ model: productId, size })
+                        if (stock !== null) {
+                            let i=0
+                            let founded=false 
+                            while (!founded && i < stock.inventory.length) {
+                                if (stock.inventory[i].quantity > 0) {
+                                    if (stock.inventory[i].quantity - itemQuantity >= 0) {
+                                        founded=true
+                                        storeID=stock.inventory[i].id
+                                        storePrice=stock.inventory[i].price
+                                    } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
+                                }
+                                i++
+                            }
+                        } else {storeID = "Nové"}
                     }
-                
+                    
                     productList.push({
                         orderId: order.id_order,
                         orderNumber: order.number,
@@ -181,7 +188,9 @@ async function getOrdersData(eshopUri) {
                         storeID,
                         action,
                         storePrice,
+                        index: productIndex,
                     })
+                    productIndex++
                     orderQuantity--
                 }
             }
@@ -216,12 +225,16 @@ async function getOrdersData(eshopUri) {
         const returns = returnsCollection.find({'items.saved': false})
         await returns.forEach(ret => {
             ret.items.forEach(item => {
-                if (!item.saved) productList.push({
-                    ...item,
-                    action: 'n',
-                    sale: true,
-                    ret: true
-                })
+                if (!item.saved) {
+                    productList.push({
+                        ...item,
+                        action: 'n',
+                        sale: true,
+                        ret: true,
+                        index: productIndex,
+                    })
+                    productIndex++
+                }
             })
         })
 
@@ -389,6 +402,17 @@ async function saveSale(items, storeID) {
         })
         newSale = { date, totalSum, totalCount, totalPriceDif, storeID, items: itemsList }
         await salesCollection.insertOne(newSale)
+
+        //reduce items count in variants
+        for (let i=0; i<newSale.items.length; i++) {
+            let {productId, size, count} = items[i]
+            console.log(productId, size, count)
+            let result = await inventoryCollection.findOneAndUpdate(
+                { model: productId, size, "inventory.id": storeID},
+                { $inc: {"inventory.$.quantity": -1}}
+            )
+            console.log(result)
+        }
 
         //update 'saved' status at returns
         for (let i=0; i<returnsIndexes.length; i++) {

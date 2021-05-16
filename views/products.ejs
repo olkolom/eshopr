@@ -1,145 +1,34 @@
 <%- include('partials/header') %>
-    <form method="GET" action="/products">
-        <label for="pname">Artikl: </label>
-        <input type="text" id="pname" name="item">
-        <input type="submit" value="Hledat" class="button button2">    
-        <% stores.forEach(storeID => { %>
-            <h3>Zboží <%= storeID %></h3>
-            <a href="sell?id=<%= storeID %>" class="button button1">Prodej v Beststore</a>
-            <a href="sales?id=<%= storeID %>" class="button button1">Historie</a>
-            <a href="/" class="button button1">Zpátky</a>
-            <br> <br>
-            <p>Připraveno pro prodej v Beststore</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Akce</th>
-                        <th>Objednávka</th>
-                        <th>Photo</th>
-                        <th>Typ</th>
-                        <th>Artikl</th>
-                        <th>Velikost</th>
-                        <th>Cena</th>
-                        <th>Ks</th>
-                        <th>Prodejna</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% productList.forEach((item, index) => { %>
-                        <% if(item.storeID==storeID&& item.action=='p') { %>
-                            <% if(item.ret) { %>
-                            <tr style="color: red">
-                            <% } else { %>
-                            <tr>
-                            <% } %>
-                                <td>
-                                    <button class="button button2" value=<%= 'n_'+index %> name="action" type="submit">Vrátit</button>
-                                </td>
-                                <td><a href="/order?orderid=<%= item.orderNumber %>"><%= item.orderNumber %></a></td>
-                                <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 width=75></td>
-                                <td><%= item.productType %></td>
-                                <td><%= item.productId %></td>
-                                <td><%= item.size %></td>
-                                <td><%= item.storePrice %></td>
-                                <td><%= item.count %></td>
-                                <td><%= item.storeID %></td>
-                            </tr>
-                    <% }}) %>
-                </tbody>
-            </table>
-            <br> <br>
-            <p>Zboží ke zpracovaní</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Akce</th>
-                        <th>Objednávka</th>
-                        <th>Photo</th>
-                        <th>Typ</th>
-                        <th>Artikl</th>
-                        <th>Velikost</th>
-                        <th>Cena</th>
-                        <th>Ks</th>
-                        <th>Prodejna</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% productList.forEach((item, index) => { %>
-                        <% if(item.storeID==storeID && item.action!=='p') { %>
-                            <% if(item.ret) { %>
-                            <tr style="color: red">
-                            <% } else { %>
-                            <tr>
-                            <% } %>
-                                <td>
-                                    <% if(item.sale && item.action !== 'u'){ %>
-                                        <button class="button button2" value=<%= 'p_'+index %> name="action" type="submit">Prodej</button>
-                                    <% } else if (item.action !== 'u') {%>
-                                        Rezervace
-                                    <% } else if (item.delivery !== "Osobní odběr") { %>
-                                        Uloženo v BS <%= item.date %>
-                                    <% } else {%>
-                                        Uloženo v BS <%= item.date %> (Os.od.)
-                                    <% } %>
-                                </td>
-                                <td><a href="/order?orderid=<%= item.orderNumber %>"><%= item.orderNumber %></a></td>
-                                <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 width=75></td>
-                                <td><%= item.productType %></td>
-                                <td><%= item.productId %></td>
-                                <td><%= item.size %></td>
-                                <td><%= item.price %></td>
-                                <td><%= item.count %></td>
-                                <td><%= item.storeID %></td>
-                            </tr>
-                    <% }}) %>
-                </tbody>
-            </table>
-            <br> <br>
-        <% }) %>
-    </form>
-    <br>
-    <h3>Zbytek</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Akce</th>
-                <th>Objednávka</th>
-                <th>Photo</th>
-                <th>Typ</th>
-                <th>Artikl</th>
-                <th>Velikost</th>
-                <th>Cena</th>
-                <th>Ks</th>
-                <th>Prodejna</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% productList.forEach((item, index) => { %>
-                <% if(!stores.includes(item.storeID)) { %>
-                    <tr>
-                        <td></td>
-                        <td><a href="/order?orderid=<%= item.orderNumber %>"><%= item.orderNumber %></a></td>
-                        <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=1 width=75></td>
-                        <td><%= item.productType %></td>
-                        <td><%= item.productId %></td>
-                        <td><%= item.size %></td>
-                        <td><%= item.price %></td>
-                        <td><%= item.count %></td>
-                        <td><%= item.storeID %></td>
-                    </tr>
-            <% }}) %>
-        </tbody>
-    </table>
-    <script type="text/javascript">
-        window.onload = function() {
-                var input = document.getElementById("pname").focus();
-            }
-        function toggleButton(buttonID) {
-            let button = document.getElementById(buttonID)
-            const newItem = document.createElement('p')
-            newItem.innerHTML = button.innerText
-            button.parentNode.replaceChild(newItem, button)
-            button = null
+<form method="GET" action="/products">
+    <label for="pname">Artikl: </label>
+    <input type="text" id="pname" name="item">
+    <input type="submit" value="Hledat" class="button button2">    
+    <% stores.forEach(storeID => { %>
+        <h3>Zboží <%= storeID %></h3>
+        <a href="sell?id=<%= storeID %>" class="button button1">Prodej v Beststore</a>
+        <a href="sales?id=<%= storeID %>" class="button button1">Historie</a>
+        <a href="/" class="button button1">Zpátky</a>
+        <%- include('partials/tab_products', {
+            products: productList.filter(item => item.storeID==storeID&& item.action=='p'),
+            name: 'Připraveno pro prodej v Beststore',
+            action: 'n_'}
+        ) %>
+        <%- include('partials/tab_products', {
+            products: productList.filter(item => item.storeID==storeID && item.action!=='p'),
+            name: 'Zboží ke zpracovaní',
+            action: 'p_'}
+        ) %>
+        <br> <br>
+    <% }) %>
+</form>
+<%- include('partials/tab_products', {
+    products: productList.filter(item => !stores.includes(item.storeID)),
+    name: 'Zbytek',
+    action: ''}
+) %>
+<script type="text/javascript">
+    window.onload = function() {
+            var input = document.getElementById("pname").focus();
         }
-    </script>
+</script>
 <%- include('partials/footer') %>

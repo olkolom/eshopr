@@ -111,7 +111,7 @@ app.get("/refresh", (req, res)=> {
 })
 
 app.use((req, res, next) => {
-  if (req.session.updating) return;
+  if (req.session.updating) return console.log('Updating...')
   if (req.session.data === undefined) {
     console.log('New session. Loading order data.')
     res.redirect('/refresh')
