@@ -75,9 +75,9 @@ async function getOrdersData(eshopUri) {
 
         //read and process new, paid and unpaid orders
         const dbQuery = { vyrizeno : { $in: ['c','d','n','g'] } }
-        const dbOptions = { sort: {'id_order': -1} }
+        const dbOptions = { sort: {'id_order': 1} }
         const ordersSelection = await ordersCollection.find(dbQuery, dbOptions).toArray()
-        for (orderIndex=0; orderIndex < ordersSelection.length; orderIndex++) {
+        for (orderIndex = 0; orderIndex < ordersSelection.length; orderIndex++) {
             const order = ordersSelection[orderIndex]
             let status = ''
             let toSend = false
@@ -117,7 +117,7 @@ async function getOrdersData(eshopUri) {
             }
             
             //productlist + assign stores and action 'n' or 'u'
-            for (i=0; i<order.row_list.length; i++) {
+            for (i=order.row_list.length -1; i >= 0; i--) {
                 const product = order.row_list[i]
                 let productId = product.product_number
                 let size = product.variant_description.split(' ')[2]
@@ -174,7 +174,7 @@ async function getOrdersData(eshopUri) {
                         } else {storeID = "Nové"}
                     }
                     
-                    productList.push({
+                    productList.unshift({
                         orderId: order.id_order,
                         orderNumber: order.number,
                         productType: product.product_name,
@@ -196,7 +196,7 @@ async function getOrdersData(eshopUri) {
             }
 
             //ordersList
-            ordersList.push({
+            ordersList.unshift({
                 id: order.id_order,
                 number: order.number,
                 name: order.customer.delivery_information.name,
