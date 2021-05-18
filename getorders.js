@@ -144,17 +144,22 @@ async function getOrdersData(eshopUri) {
                     let action = 'n'
                     let saleDate = ""
                     //check if sold
-                    let sold = await salesCollection.find({
+                    let soldItems = []
+                    await salesCollection.find({
                         items: {$elemMatch: { 
                             orderId: order.number, 
                             productId,
                             size,
                         }}
-                    }).toArray()
-                    if (sold.length > 0 && sold.length >= sameOrderQuantity) { 
+                    }).forEach( sale => {
+                        sale.items.forEach( item => {
+                            if (item.productId === productId && item.size === size) soldItems.push({storeID: sale.storeID, date: sale.date})    
+                        })
+                    })
+                    if (soldItems.length >= sameOrderQuantity) { 
                         action = 'u'
-                        storeID = sold[sameOrderQuantity-1].storeID
-                        saleDate = sold[sameOrderQuantity-1].date.slice(-5)
+                        storeID = soldItems[sameOrderQuantity-1].storeID
+                        saleDate = soldItems[sameOrderQuantity-1].date.slice(-5)
                     } else {
                         //find candidate to sale
                         let stock = await inventoryCollection.findOne({ model: productId, size })
