@@ -128,7 +128,8 @@ app.get("/products", (req, res)=> {
   if (req.query.action !== undefined) {
     let action = req.query.action.split('_')
     let type = action[0]
-    let index = parseInt(action[1],10)
+    let itemIndex = parseInt(action[1],10)
+    let index = req.session.data.productList.findIndex(item => item.index === itemIndex)
     req.session.data.productList[index].action = type
     return res.render('products', req.session.data )
   }
