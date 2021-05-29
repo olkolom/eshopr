@@ -153,13 +153,14 @@ async function getOrdersData(eshopUri) {
                         }}
                     }).forEach( sale => {
                         sale.items.forEach( item => {
-                            if (item.productId === productId && item.size === size) soldItems.push({storeID: sale.storeID, date: sale.date})    
+                            if (item.productId === productId && item.size === size) soldItems.push({storeID: sale.storeID, date: sale.date, price: item.price})    
                         })
                     })
                     if (soldItems.length >= sameOrderQuantity) { 
                         action = 'u'
                         storeID = soldItems[sameOrderQuantity-1].storeID
                         saleDate = soldItems[sameOrderQuantity-1].date.slice(-5)
+                        storePrice = soldItems[sameOrderQuantity-1].price
                     } else {
                         //find candidate to sale
                         let stock = await inventoryCollection.findOne({ model: productId, size })
@@ -372,11 +373,12 @@ async function saveSale(items, storeID) {
         items.forEach((item, index) => {
             let actionItem = false
             //apparel
-            if (item.productId.length> 7)// && item.productId[1]<7) //before SS21 
-                if (item.productId[1]<7 || inAction.find(i=> i==item.productID) !== undefined) 
-                    actionItem = true
+            if (item.productId.length > 7) {// && item.productId[1]<7) //before SS21 
+                if (item.productId[1] < 7 || inAction.find(i=> i == item.productId) !== undefined) actionItem = true
             //shoes
-            if (item.productId.length === 7 && item.productType !== 'Sandály') actionItem = true
+            } else { 
+                if (item.productId[0] == 7 && item.productType !== 'Sandály') actionItem = true
+            }
             if (actionItem && item.count>0) actionIndexes.push(index)
         })
         //if (actionIndexes.length > 2) 
