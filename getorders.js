@@ -353,9 +353,30 @@ async function saveReturn(data) {
 } 
 
 async function getReturns() {
-    let returns
+    const returns = []
     try {
-        returns = await returnsCollection.find().limit(100).sort({date: -1}).toArray()
+        const query = await returnsCollection.find().limit(50).sort({date: -1}).toArray()
+        for (const curReturn of query) {
+            const fromOrder = await ordersCollection.findOne({number: curReturn.order})
+            let invoice = ''
+            if (fromOrder !== null ) invoice = fromOrder.invoice_number
+            const returnOrder = await ordersCollection.findOne({
+                vyrizeno: 'f', 
+                invoice_note: 'Opravný daňový doklad k faktuře č. ' + invoice,
+                //"total_per_vat['21'].price_with_vat": curReturn.totalSum,
+            })
+            
+            let vs =''
+            if (returnOrder !== null ) {
+                //console.log(returnOrder.total_per_vat['21'].price_with_vat, curReturn.totalSum)
+                vs = returnOrder.invoice_variable_symbol
+            }
+            returns.push({
+                ...curReturn,
+                invoice,
+                vs
+            })
+        }
     } catch(err) {
         console.log('Get returns data error:' + err.message)
     }
@@ -374,11 +395,11 @@ async function saveSale(items, storeID) {
             let actionItem = false
             //apparel
             if (item.productId.length > 7) {// && item.productId[1]<7) //before SS21 
-                if (item.productId[1] < 7 || inAction.find(i=> i == item.productId) !== undefined) actionItem = true
-            //shoes
+                if (item.productId[1] < 7) actionItem = true //|| inAction.find(i=> i == item.productId) !== undefined) actionItem = true
+            } /*/shoes
             } else { 
                 if (item.productId[0] == 7 && item.productType !== 'Sandály') actionItem = true
-            }
+            } */
             if (actionItem && item.count>0) actionIndexes.push(index)
         })
         //if (actionIndexes.length > 2) 

@@ -15,21 +15,25 @@
     <tr>
         <th>Datum</th>
         <th>Objednávka</th>
+        <th>Faktura</th>
         <th>Ks</th>
         <th>Častka</th>
         <th>Vraceno</th>
         <th>Účet</th>
         <th>Banka</th>
+        <th>VS</th>
     </tr>
     <% returns.forEach( item => { %>
         <tr>
             <td><%= item.date %></td>
             <td><%= item.order %></td>
+            <td><%= item.invoice %></td>
             <td><%= item.totalCount%></td>
             <td><%= item.totalSum%></td>
             <td><%= item.datePay%></td>
             <td><%= item.account%></td>
             <td><%= item.bank%></td>
+            <td><%= item.vs%></td>
         </tr>
     <% }) %>
 </table>
