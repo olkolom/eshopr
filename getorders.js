@@ -413,16 +413,6 @@ async function saveSale(items, storeID) {
         actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
     }
 
-    if (storeID === 'Outlet') {
-        actionReducer = 0.7
-        let actionIndexes = []
-        items.forEach((item, index) => {
-            let actionItem = true
-            if (actionItem && item.count>0) actionIndexes.push(index)
-        })
-        actionIndexes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducer))
-    }
-
     let date = new Date().toISOString().slice(0,10)
     let newSale
     try {
