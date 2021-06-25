@@ -387,7 +387,7 @@ async function getReturns() {
 
 async function saveSale(items, storeID) {
 
-    //action prepare
+    /*/action prepare
     if (storeID === 'Kotva') {
         actionReducer = 0.8
         //actionReducerShoes = 0.9
@@ -404,16 +404,16 @@ async function saveSale(items, storeID) {
                     actionItem = true 
                 }
             //shoes
-            } /* else { 
-                if (item.productId[0] == 7 && item.productType === 'Sandály') actionItemShoes = true
-            } */
+            }   // else { 
+                //  if (item.productId[0] == 7 && item.productType === 'Sandály') actionItemShoes = true
+                //}
             if (actionItem && item.count>0) actionIndexes.push(index)
             //if (actionItemShoes && item.count>0) actionIndexesShoes.push(index)
         })
         //if (actionIndexes.length > 2) 
         actionIndexes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducer))
         //actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
-    }
+    } */
 
     let date = new Date().toISOString().slice(0,10)
     let newSale
