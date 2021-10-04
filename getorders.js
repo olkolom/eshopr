@@ -101,7 +101,11 @@ async function getOrdersData(eshopUri) {
                 phone = phone.slice(phone.length - 9, phone.length)}
             let dobirka = ''
             if (order.payment.nazev_platba == "Platba dobírkou") {
-                dobirka = order.total_per_vat['21'].price_with_vat
+                if (order.total_per_vat['21'] == undefined) {
+                    dobirka = order.total_per_vat['20'].price_with_vat
+                } else {
+                    dobirka = order.total_per_vat['21'].price_with_vat
+                }
             }
             let pplData = {
                 'vs': order.number,
