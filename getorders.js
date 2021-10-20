@@ -435,7 +435,8 @@ async function saveSale(items, storeID) {
                 size: item.size,
                 price: item.storePrice,
                 count: item.count,
-                total: item.count*item.storePrice,
+                total: item.count*Math.abs(item.storePrice),
+                orderPrice: item.price,
             })
             totalSum = totalSum + item.count*Math.abs(item.storePrice)
             totalCount = totalCount + item.count
@@ -484,12 +485,12 @@ async function getOrdersByItem (item) {
     let orders = []
     try {
         let itemID
-        if (item.length == 13) {
+        if (item.length == 13 && !item.includes(' ')) {
             const ean = parseInt(item, 10)
             const variant = await inventoryCollection.findOne({ ean: ean })
             if (variant !== null) itemID=variant["_id"]
         } else {
-            const params = item.split('-')
+            const params = item.split(' ')
             const model = params[0].toString()
             const size = params[1].toString()
             const variant = await inventoryCollection.findOne({ model: model, size: size })

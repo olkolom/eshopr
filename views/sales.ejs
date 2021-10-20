@@ -42,7 +42,7 @@
                         <td><%= item.price %></td>
                         <td><%= item.count %></td>
                         <td><%= item.total %></td>
-                        <td><%= item.orderId %></td>
+                        <td><a href="order?orderid=<%= item.orderId %>"><%= item.orderId %></a></td>
                     </tr>
                 <% }) %>
             </tbody>
