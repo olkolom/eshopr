@@ -391,7 +391,7 @@ async function getReturns() {
 
 async function saveSale(items, storeID) {
 
-    //action prepare
+    /*/action prepare
     if (storeID === 'Kotva' || storeID === 'Harfa') {
         actionReducer = 0.8
         //actionReducerShoes = 0.9
@@ -418,7 +418,7 @@ async function saveSale(items, storeID) {
         //if (actionIndexes.length > 2) 
         actionIndexes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducer))
         //actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
-    } //
+    } /*/
 
     let date = new Date().toISOString().slice(0,10)
     let newSale
