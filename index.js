@@ -95,28 +95,19 @@ app.get('/auth', (req, res) => {
 
 app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/auth'))
 
-app.get("/refresh", (req, res)=> {
-  const stores = users[req.session.user]
+var dataProcessing = false
+app.get('/refresh', async (req, res, next)=> {
   console.log('Processing data...')
-  req.session.updating = true
-  dataSource.getOrdersData(config.eshopUri)
-  .then( ordersData => {
-    req.session.data = {
-      ...ordersData,
-      stores
-    }
-    req.session.updating = false
-    return res.redirect('/')
-  })
+  if (dataProcessing === true) {return next()}
+  dataProcessing = true
+  req.session.data = await dataSource.getOrdersData(config.eshopUri)
+  req.session.data.stores = users[req.session.user]
+  dataProcessing = false
+  res.redirect('/')
 })
+app.get('/refresh', async (req, res)=> {res.send('Double click')})
 
-app.use((req, res, next) => {
-  if (req.session.updating) return console.log('Updating...')
-  if (req.session.data === undefined) {
-    console.log('New session. Loading order data.')
-    res.redirect('/refresh')
-  } else next()  
-})
+app.use((req, res, next) => (req.session.data !== undefined) ? next() : res.redirect('/refresh'))
 
 app.get("/", (req, res)=> {
   res.render('index', req.session.data )

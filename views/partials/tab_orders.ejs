@@ -10,6 +10,7 @@
         <th>Odesílatel</th>
         <th>Datum</th>
         <th>Číslo</th>
+        <th>SK</th>
         <th>Objednavatel</th>
         <th>Doprava</th>
         <th>Platba</th>
@@ -18,10 +19,11 @@
     <% orders.forEach((order, index) => { %>
         <tr>
             <td><input type="checkbox" id= <%- '"' +cbTag +index +'"' %> name="ord" value=<%= order.id %>></td>
-            <td><%= index +1 %></td>
-            <td><%= order.sender %></td>
+            <td <% if (order.allItemSold) {%>style="color: red; font-weight: bold"<%}%>%>><%= index +1 %></td>
+            <td <% if (order.multiStore) {%>style="font-weight: bold"<%}%>%>><%= order.sender %></td>
             <td><%= order.date %></td>
             <td><a href="order?orderid=<%= order.number %>"><%= order.number %></a></td>
+            <td style="font-weight: bold"><%= order.skOrder %></td>
             <td><%= order.name %></td>
             <td><%= order.delivery %></td>
             <td><%= order.payment %></td>

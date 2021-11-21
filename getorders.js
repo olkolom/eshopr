@@ -1,5 +1,6 @@
 const { MongoClient } = require('mongodb')
 
+//implementation of http get
 function getRequest (url) {
     return new Promise((resolve, reject) => {
         const lib = url.startsWith('https') ? require('https') : require('http')
@@ -15,6 +16,7 @@ function getRequest (url) {
     })
 }
 
+//configurable orders read with ER api
 function getApiOrders (url, limit, date, after ) {
     return new Promise((resolve, reject) => {
         let addToUrl = ''
@@ -89,6 +91,15 @@ async function getOrdersData(eshopUri) {
                 && order.payment.nazev_platba == "Platba předem na účet" 
                 && order.vyrizeno == "g") status='Ano'
             if (order.payment.nazev_platba == "Platba dobírkou" || status=='Ano') toSend = true
+            let phone = order.customer.delivery_information.phone
+            let psc = order.customer.delivery_information.zip
+            
+            //finding SK orders
+            let skOrder = ''
+            if ( ['0','8','9'].includes(psc[0]) ) skOrder = '?'
+            if (phone.slice(phone.length - 9, phone.length - 8) == "9") skOrder = '?'
+            if (order.delivery.nazev_postovne.split(' - ')[0] == "PPL SK" || order.delivery.nazev_postovne.split(' - ')[0] == "Zásilkovna SK") skOrder = '!'
+            if (order.total_per_vat['20'] !== undefined) skOrder = '+'
 
             //Collect PPL data
             let adress = order.customer.delivery_information.street
@@ -96,7 +107,6 @@ async function getOrdersData(eshopUri) {
             let adrArr = adress.split(' ')
             let dom = adrArr.pop()
             adress = adrArr.join(' ')
-            let phone = order.customer.delivery_information.phone
             if (phone.length !== 9) {
                 phone = phone.slice(phone.length - 9, phone.length)}
             let dobirka = ''
@@ -116,7 +126,7 @@ async function getOrdersData(eshopUri) {
                 'ulice': adress,
                 'dom': dom,
                 'mesto': order.customer.delivery_information.city,
-                'psc': order.customer.delivery_information.zip,
+                'psc': psc,
                 'dobirka': dobirka,
             }
             
@@ -218,19 +228,30 @@ async function getOrdersData(eshopUri) {
                 date: order.origin.date.date.slice(5,16),
                 toSend,
                 sender: '',
-                pplData
+                pplData,
+                multiStore: false,
+                skOrder,
+                allItemSold: true,
             })
         }
         
-        //define sender
+        //define sender and order status
         productList.forEach(item => {
             const orderIndex = ordersList.findIndex(order => order.number == item.orderNumber)
             let sender = item.storeID
+            if (!ordersList[orderIndex].multiStore && ordersList[orderIndex].sender != '') {
+                if (sender === 'Kotva' && ordersList[orderIndex].sender !== sender
+                    || ordersList[orderIndex].sender == 'Kotva' && ordersList[orderIndex].sender !== sender) { ordersList[orderIndex].multiStore = true }
+            }
             if (sender === 'Outlet') sender = 'Harfa'
-            if (item.delivery === "Osobní odběr") sender = 'Kotva'
+            if (item.delivery === "Osobní odběr") {
+                if (sender != 'Kotva') { ordersList[orderIndex].multiStore = true }
+                sender = 'Kotva'
+            }
             if (ordersList[orderIndex].sender === ''
                 || (ordersList[orderIndex].sender === 'Kotva' && sender === 'Harfa')) 
                 { ordersList[orderIndex].sender = sender }
+            if (ordersList[orderIndex].allItemSold && item.date !== '') ordersList[orderIndex].allItemSold = false
         })
 
         //add returns to productList
@@ -286,6 +307,7 @@ async function getOrder(orderID) {
             let storeID = "Neni"
             let storePrice = 0
             let size = product.size
+            let soldDate = "-"
             if (typeof(size) == "number" ) {size = size.toString()}
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
@@ -314,9 +336,11 @@ async function getOrder(orderID) {
                 storeID = sold.storeID
                 soldItem = sold.items.find(e => (e.productId === product.productId && e.size === product.size ))
                 storePrice = soldItem.price
+                soldDate = sold.date
             }
             items[i].storeID = storeID
             items[i].storePrice = storePrice
+            items[i].date = soldDate
         }
         orderData.items = items
     } catch(err) {
