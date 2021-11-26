@@ -415,8 +415,8 @@ async function getReturns() {
 
 async function saveSale(items, storeID) {
 
-    /*/action prepare
-    if (storeID === 'Kotva' || storeID === 'Harfa') {
+    //action prepare
+    if (storeID === 'Outlet') {
         actionReducer = 0.8
         //actionReducerShoes = 0.9
         //const notInAction = ['45101031','45102031','45102501','45121001','45121041','45121042','45122001','45122051','45122591','45246502']
@@ -435,14 +435,14 @@ async function saveSale(items, storeID) {
             } else { 
                 actionItem = true
                 //  if (item.productId[0] == 7 && item.productType === 'Sandály') actionItemShoes = true
-                }
+            }
             if (actionItem && item.count>0) actionIndexes.push(index)
             //if (actionItemShoes && item.count>0) actionIndexesShoes.push(index)
         })
         //if (actionIndexes.length > 2) 
         actionIndexes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducer))
         //actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
-    } /*/
+    }
 
     let date = new Date().toISOString().slice(0,10)
     let newSale
