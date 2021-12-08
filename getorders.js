@@ -28,6 +28,7 @@ function getApiOrders (url, limit, date, after ) {
         .then(data => {
             const dataObj = JSON.parse(data)
             if (dataObj.success) {
+                console.log(`Loaded from API ${dataObj.params.orderList.length} orders`)
                 resolve (dataObj.params.orderList)
             } else {
                 reject(new Error('Failed to load'))
@@ -43,10 +44,12 @@ async function getOrdersData(eshopUri) {
     let productIndex= 0
     try {
         //add fresh and update new, paid and unpaid orders
+        console.log('Getting orders from DB')
         const ordersToUpdate = await ordersCollection.find(
             { vyrizeno : { $in: ['c','d','n','g'] } }, 
             { sort: {'id_order': -1}, projection: { '_id': 0, 'id_order': 1}})
             .toArray()
+        console.log('done')
         const firstDbOrderId = ordersToUpdate[ordersToUpdate.length-1]['id_order']
         const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}, projection: { '_id': 0, 'id_order': 1}})
         const lastDbOrderId = lastDbOrder.id_order
