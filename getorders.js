@@ -9,7 +9,14 @@ function getRequest (url) {
                 reject(new Error('Failed to load, status code: ' + response.statusCode))
              }
             const body = []
-            response.on('data', chunk => body.push(chunk))
+            let i = 1
+            response.on('data', chunk => {
+                process.stdout.clearLine()
+                process.stdout.cursorTo(0)
+                process.stdout.write(i.toString())
+                i++
+                body.push(chunk)
+            })
             response.on('end', () => resolve(body.join('')))
           })
         request.on('error', err => reject(err))
