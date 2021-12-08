@@ -59,7 +59,9 @@ async function getOrdersData(eshopUri) {
         if (ordersCount > 99) ordersCount = 99 //TODO implement page read from api
         let newOrdersCount = lastApiOrderId - lastDbOrderId
         if (newOrdersCount > 99) newOrdersCount = 99 //TODO implement page read from api
+        console.log('Getting orders from API')
         let apiOrders = await getApiOrders(eshopUri, ordersCount)
+        console.log('done')
         const freshApiOrders = apiOrders.slice(0, newOrdersCount)
         if (freshApiOrders.length > 0) {
             let result = await ordersCollection.insertMany(freshApiOrders)
