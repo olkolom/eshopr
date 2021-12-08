@@ -11,10 +11,6 @@ function getRequest (url) {
             const body = []
             let i = 1
             response.on('data', chunk => {
-                process.stdout.clearLine()
-                process.stdout.cursorTo(0)
-                process.stdout.write(i.toString())
-                i++
                 body.push(chunk)
             })
             response.on('end', () => resolve(body.join('')))
@@ -50,7 +46,7 @@ async function getOrdersData(eshopUri) {
     let productList= []
     let productIndex= 0
     try {
-        //add fresh and update new, paid and unpaid orders
+	//add fresh and update new, paid and unpaid orders
         console.log('Getting orders from DB')
         const ordersToUpdate = await ordersCollection.find(
             { vyrizeno : { $in: ['c','d','n','g'] } }, 
