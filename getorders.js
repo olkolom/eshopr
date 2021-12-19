@@ -9,7 +9,6 @@ function getRequest (url) {
                 reject(new Error('Failed to load, status code: ' + response.statusCode))
              }
             const body = []
-            let i = 1
             response.on('data', chunk => {
                 body.push(chunk)
             })
@@ -259,7 +258,7 @@ async function getOrdersData(eshopUri) {
             if (ordersList[orderIndex].sender === ''
                 || (ordersList[orderIndex].sender === 'Kotva' && sender === 'Harfa')) 
                 { ordersList[orderIndex].sender = sender }
-            if (ordersList[orderIndex].allItemSold && item.date !== '') ordersList[orderIndex].allItemSold = false
+            if (ordersList[orderIndex].allItemSold && item.date == '') ordersList[orderIndex].allItemSold = false
         })
 
         //add returns to productList
@@ -315,7 +314,7 @@ async function getOrder(orderID) {
             let storeID = "Neni"
             let storePrice = 0
             let size = product.size
-            let soldDate = "-"
+            let soldDate = ""
             if (typeof(size) == "number" ) {size = size.toString()}
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
@@ -423,9 +422,9 @@ async function getReturns() {
 
 async function saveSale(items, storeID) {
 
-    /*/action prepare
+    //action prepare
     if (storeID === 'Outlet') {
-        actionReducer = 0.8
+        actionReducer = 0.7
         //actionReducerShoes = 0.9
         //const notInAction = ['45101031','45102031','45102501','45121001','45121041','45121042','45122001','45122051','45122591','45246502']
         //const inAction = ['45101011','45101031','45101541','45102031','45102501','45102541','45121001','45121041','45121042','45122001','45122051','45122591','47101001','47101002','47101011','47101501','47101502','47101511','47102001','47102002','47102011','47102501','47102511','47102521','47121001','47121011','47121021','47121022','47121023','47121041','47121301','47121511','47121521','47121522','47121523','47121524','47121525','47121531','47121541','47122001','47122011','47122021','47122031','47122041','47122051','47122511','47122521','47122522','47122523','47122524','47122525','47122526','47122531','47122541','47122551','47123011','47126301','47126701','47151001','47151011','47151501','47151511','47151521','47152001','47152011','47152501','47152511','47152521','47181001','47181011','47181501','47181511','47182001','47182011','47182021','47182501','47182511','47182521','47183001','47183011','47183021','47183501','47183511','47183521','47196001','47196051','47196501','47196541','47206001','47206301','47206311','47206501','47206701','47206711','47211001','47211002','47211011','47211021','47211501','47211502','47211503','47211511','47212001','47212002','47212003','47212011','47212021','47212501','47212502','47212503','47212511','47216301','47216701','89121352','89121353','89121731','89121732','89121791','89121792','89122362','89122363','89122381','89122382','89122391','89122392','89122751','89122753','89122821','89122822','89123362','89123363','89123382','89123391','89123392','89123751','89123753','89123821','89123822']
@@ -450,7 +449,7 @@ async function saveSale(items, storeID) {
         //if (actionIndexes.length > 2) 
         actionIndexes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducer))
         //actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
-    } */
+    }
 
     let date = new Date().toISOString().slice(0,10)
     let newSale

@@ -19,7 +19,7 @@
     <% orders.forEach((order, index) => { %>
         <tr>
             <td><input type="checkbox" id= <%- '"' +cbTag +index +'"' %> name="ord" value=<%= order.id %>></td>
-            <td <% if (order.allItemSold) {%>style="color: red; font-weight: bold"<%}%>%>><%= index +1 %></td>
+            <td <% if (!order.allItemSold) {%>style="color: red; font-weight: bold"<%}%>%>><%= index +1 %></td>
             <td <% if (order.multiStore) {%>style="font-weight: bold"<%}%>%>><%= order.sender %></td>
             <td><%= order.date %></td>
             <td><a href="order?orderid=<%= order.number %>"><%= order.number %></a></td>
