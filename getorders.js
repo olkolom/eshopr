@@ -105,7 +105,7 @@ async function getOrdersData(eshopUri) {
             let skOrder = ''
             if ( ['0','8','9'].includes(psc[0]) ) skOrder = '?'
             if (phone.slice(phone.length - 9, phone.length - 8) == "9") skOrder = '?'
-            if (order.delivery.nazev_postovne.split(' - ')[0] == "PPL SK" || order.delivery.nazev_postovne.split(' - ')[0] == "Zásilkovna SK") skOrder = '!'
+            if (order.delivery.nazev_postovne.split(' - ')[0] == "PPL Slovensko" || order.delivery.nazev_postovne.split(' - ')[0] == "Zásilkovna Slovensko") skOrder = '!'
             if (order.total_per_vat['20'] !== undefined) skOrder = '+'
 
             //Collect PPL data
@@ -423,7 +423,7 @@ async function getReturns() {
 async function saveSale(items, storeID) {
 
     //action prepare
-    if (storeID) {
+    if (storeID != 'Outlet') {
         actionReducer = 0.8
         //actionReducerShoes = 0.9
         //const notInAction = ['45101031','45102031','45102501','45121001','45121041','45121042','45122001','45122051','45122591','45246502']
