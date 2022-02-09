@@ -423,7 +423,7 @@ async function getReturns() {
 async function saveSale(items, storeID) {
 
     //action prepare
-    if (storeID != 'Outlet') {
+    if (storeID) {
         actionReducer = 0.8
         //actionReducerShoes = 0.9
         //const notInAction = ['45101031','45102031','45102501','45121001','45121041','45121042','45122001','45122051','45122591','45246502']
