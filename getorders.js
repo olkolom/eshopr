@@ -445,6 +445,8 @@ async function saveSale(items, storeID) {
                 //  if (item.productId[0] == 7 && item.productType === 'Sandály') actionItemShoes = true
             }
             */
+            if (item.productId.length == 7 && item.productId[0] == 1) { actionItem = false }
+            if (item.productId.length == 8 && item.productId[0] == 5) { actionItem = false }
             if (actionItem && item.count>0) actionIndexes.push(index)
             //if (actionItemShoes && item.count>0) actionIndexesShoes.push(index)
         })
