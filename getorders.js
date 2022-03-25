@@ -520,17 +520,16 @@ async function getSales(storeID, date) {
 async function getOrdersByItem (item) {
     let orders = []
     try {
-        let itemID
+        let itemID, variant
         if (item.length == 13 && !item.includes(' ')) {
-            const ean = parseInt(item, 10)
-            const variant = await inventoryCollection.findOne({ ean: ean })
-            if (variant !== null) itemID=variant["_id"]
+            const ean = parseInt(item)
+            variant = await inventoryCollection.findOne({ean})
         } else {
-            const params = item.split(' ')
-            const model = params[0].toString()
-            const size = params[1].toString()
-            const variant = await inventoryCollection.findOne({ model: model, size: size })
-            if (variant !== null) itemID=variant["_id"]
+            const [model, size]= item.split(' ')
+            variant = await inventoryCollection.findOne({ model, size })
+        }
+        if (variant) {
+            variant.esVarId ? itemID= variant.esVarId : itemID= variant["_id"]
         }
         if (itemID !== undefined) {
             itemID = itemID.split('_')
