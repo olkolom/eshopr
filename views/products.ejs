@@ -10,12 +10,22 @@
         <a href="/" class="button button1">Zpátky</a>
         <%- include('partials/tab_products', {
             products: productList.filter(item => item.storeID==storeID&& item.action=='p'),
-            name: 'Připraveno pro prodej v Beststore',
+            name: productList.filter(item => item.storeID==storeID&& item.action=='p').length +' ks. připraveno pro prodej v Beststore',
             action: 'n_'}
         ) %>
         <%- include('partials/tab_products', {
-            products: productList.filter(item => item.storeID==storeID && item.action!=='p'),
+            products: productList.filter(item => item.storeID==storeID && item.action!=='p' && (item.sale && item.action !== 'u')),
             name: 'Zboží ke zpracovaní',
+            action: 'p_'}
+        ) %>
+        <%- include('partials/tab_products', {
+            products: productList.filter(item => item.storeID==storeID && item.action!=='p' && (!item.sale && item.action !== 'u')),
+            name: 'Rezervované zboží',
+            action: 'p_'}
+        ) %>
+         <%- include('partials/tab_products', {
+            products: productList.filter(item => item.storeID==storeID && item.action!=='p' && item.action === 'u'),
+            name: 'Zpracované zboží',
             action: 'p_'}
         ) %>
         <br> <br>
