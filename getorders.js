@@ -367,18 +367,24 @@ async function saveReturn(data) {
         ...data,
         date: date.toISOString().slice(0,10),
         totalSum: data.delivery + data.payment,
-        totalCount: data.items.length * -1,
-        datePay: ""
+        totalCount: 0,
+        datePay: "",
+        items: []
     }
     let sum =0, dif =0
-    newReturn.items = data.items.map(item => {
-        item.price = item.price * -1
+    data.items.forEach(item => {
+        let itemCount= item.count
+        item.price = Math.round(item.price * -1 / item.count)
         item.storePrice = item.storePrice * -1
-        item.count = item.count * -1 
+        item.count = -1 
         item.saved = false
-        sum = sum + item.price
-        dif = dif +(item.price - item.storePrice)
-        return item
+        while (itemCount > 0) {
+            sum = sum + item.price
+            dif = dif +(item.price - item.storePrice)    
+            newReturn.items.push(item)
+            itemCount--
+            newReturn.totalCount--
+        }
     })
     newReturn.totalPriceDif = dif
     newReturn.totalSum = newReturn.totalSum + sum
@@ -425,7 +431,7 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
     //action prepare
     if (storeID == 'Kotva') {
-        actionReducer = 0.8
+        let actionReducer = 0.8
         //actionReducerShoes = 0.9
         //const notInAction = []
         let inAction= []
@@ -449,12 +455,17 @@ async function saveSale(items, storeID) {
             }
             */
             //if (item.productId.length == 7 && item.productId[0] == 1) { actionItem = false }
-            if (item.productId.length == 8 && item.productId[0] == 5 && inAction.includes(item.productId)) { actionItem = true }
-            if (actionItem && item.count>0) actionIndexes.push(index)
+            if (item.productId.length == 8 && item.productId[0] == 5) {
+                if (inAction.includes(item.productId)) {actionReducer= 0.7}
+                actionItem = true 
+            }
+            if (actionItem && item.count > 0) actionIndexes.push(index)
             //if (actionItemShoes && item.count>0) actionIndexesShoes.push(index)
         })
         //if (actionIndexes.length > 2) 
-        actionIndexes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducer))
+        actionIndexes.forEach(index => {items[index].storePrice = Math.round(items[index].storePrice * actionReducer)
+            console.log(items[index].productId, ' ', items[index].storePrice)
+        })
         //actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
     }
 
