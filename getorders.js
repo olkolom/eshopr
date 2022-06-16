@@ -433,16 +433,16 @@ async function saveSale(items, storeID) {
     //action prepare
     if (storeID == 'Outlet') {
         let actionReducer = 0.7
+        let actionIndexes = []
         //actionReducerShoes = 0.9
+        //let actionIndexesShoes = []
         //const notInAction = []
         /*
         let inAction= []
         try {
             inAction = fs.readFileSync(__dirname +'art_action.txt', {encoding: 'utf8'}).split('\n')
         } catch(err) {console.log(err.message)}
-        let actionIndexes = []
         */
-        //let actionIndexesShoes = []
         items.forEach((item, index) => {
             let actionItem = false
             //let actionItemShoes = false
