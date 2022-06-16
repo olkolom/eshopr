@@ -429,16 +429,19 @@ async function getReturns() {
 
 async function saveSale(items, storeID) {
     const fs= require('fs')
+   
     //action prepare
-    if (storeID == 'Kotva') {
-        let actionReducer = 0.8
+    if (storeID == 'Outlet') {
+        let actionReducer = 0.7
         //actionReducerShoes = 0.9
         //const notInAction = []
+        /*
         let inAction= []
         try {
             inAction = fs.readFileSync(__dirname +'art_action.txt', {encoding: 'utf8'}).split('\n')
         } catch(err) {console.log(err.message)}
         let actionIndexes = []
+        */
         //let actionIndexesShoes = []
         items.forEach((item, index) => {
             let actionItem = false
@@ -455,8 +458,8 @@ async function saveSale(items, storeID) {
             }
             */
             //if (item.productId.length == 7 && item.productId[0] == 1) { actionItem = false }
-            if (item.productId.length == 8 && item.productId[0] == 5) {
-                if (inAction.includes(item.productId)) {actionReducer= 0.7}
+            if (item.productId.length == 7 && item.productId[0] == 7) {
+                //if (inAction.includes(item.productId)) {actionReducer= 0.7}
                 actionItem = true 
             }
             if (actionItem && item.count > 0) actionIndexes.push(index)
