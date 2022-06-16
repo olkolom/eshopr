@@ -431,7 +431,7 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (storeID == 'Outlet') {
+    if (storeID == '') {
         let actionReducer = 0.7
         let actionIndexes = []
         //actionReducerShoes = 0.9
@@ -472,6 +472,7 @@ async function saveSale(items, storeID) {
         //actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
     }
 
+    
     let date = new Date().toISOString().slice(0,10)
     let newSale
     try {
