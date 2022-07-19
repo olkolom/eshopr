@@ -431,12 +431,12 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (storeID == '') {
-        let actionReducer = 0.7
+    if (storeID == 'Kotva') {
+        let actionReducer = 0.3
         let actionIndexes = []
         //actionReducerShoes = 0.9
         //let actionIndexesShoes = []
-        //const notInAction = []
+        const notInAction = [51101051,51101521,51102051,51102521,51601001,51601011,51601021,51601531,51601541,51601551,51602001,51602011,51602531,51602541,51603001,51603011,51603531,51603541]
         /*
         let inAction= []
         try {
@@ -446,28 +446,33 @@ async function saveSale(items, storeID) {
         items.forEach((item, index) => {
             let actionItem = false
             //let actionItemShoes = false
-            /*/apparel
+            //apparel
             if (item.productId.length > 7) {  //|| inAction.find(i=> i == item.productId) !== undefined)
-                if (item.productId[1] > 7) { //FW21
+                //if (item.productId[1] > 7) { //FW21
                     actionItem = true 
                 }
-            //shoes
+            /*/shoes
             } else { 
                 actionItem = true
                 //  if (item.productId[0] == 7 && item.productType === 'Sandály') actionItemShoes = true
             }
-            */
             //if (item.productId.length == 7 && item.productId[0] == 1) { actionItem = false }
             if (item.productId.length == 7 && item.productId[0] == 7) {
                 //if (inAction.includes(item.productId)) {actionReducer= 0.7}
                 actionItem = true 
             }
+            */
             if (actionItem && item.count > 0) actionIndexes.push(index)
             //if (actionItemShoes && item.count>0) actionIndexesShoes.push(index)
         })
         //if (actionIndexes.length > 2) 
-        actionIndexes.forEach(index => {items[index].storePrice = Math.round(items[index].storePrice * actionReducer)
-            console.log(items[index].productId, ' ', items[index].storePrice)
+        actionIndexes.forEach(index => {
+            let reducer = actionReducer
+            notInAction.forEach(item => {
+                if (item == items[index].productId) {reducer = 0.3}
+            })
+            items[index].storePrice = Math.round(items[index].storePrice * reducer)
+            //console.log(items[index].productId, ' ', items[index].storePrice)
         })
         //actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
     }
