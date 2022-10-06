@@ -5,3 +5,4 @@ build
 npm-debug.log
 users.json
 public/ppl.csv
+test.js

@@ -18,6 +18,40 @@ function getRequest (url) {
     })
 }
 
+//append legacy order state to the order object
+function legacyApi(orders) {
+    const newStates = {
+        13495 : "n",
+        13498 : "c",
+        13499 : "d",
+        13500 : "e",
+        13497 : "b",
+        13502 : "g",
+        13503 : "h",
+        13496 : "a",
+        221 : 1,
+        13501 : "f",
+    }
+    let noErrors = true
+    let ordersCounter = orders.length - 1
+    while (ordersCounter >= 0 && noErrors) {
+        const order = orders[ordersCounter]
+        const newState = order["id_order_state"]
+        const oldState = newStates[newState]
+        if (oldState !== undefined) {
+            orders[ordersCounter] = { ...order, "vyrizeno": oldState}
+        } else {
+            noErrors = false
+            console.log(`Order ${order["id_order"]} has unknown state ${newState}`)
+        }
+        ordersCounter--
+    }
+    if (!noErrors) {
+        return []
+    }
+    return orders
+}
+
 //configurable orders read with ER api
 function getApiOrders (url, limit, date, after ) {
     return new Promise((resolve, reject) => {
@@ -31,7 +65,7 @@ function getApiOrders (url, limit, date, after ) {
             const dataObj = JSON.parse(data)
             if (dataObj.success) {
                 console.log(`Loaded from API ${dataObj.params.orderList.length} orders`)
-                resolve (dataObj.params.orderList)
+                resolve (legacyApi(dataObj.params.orderList))
             } else {
                 reject(new Error('Failed to load from API'))
             }
@@ -280,6 +314,7 @@ async function getOrdersData(eshopUri) {
         })
 
     } catch(err) {
+        console.log(err)
         console.log('Get orders data error:' + err)
     }
     return { ordersList, productList, }
@@ -621,7 +656,7 @@ function init (mongoUri) {
         })
     }
     return {
-        getOrdersData, saveSale, saveReturn, getReturns, getSales, getOrdersByItem, getOrder, getItem
+        getOrdersData, saveSale, saveReturn, getReturns, getSales, getOrdersByItem, getOrder, getItem,
     }
 }
 

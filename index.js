@@ -17,7 +17,7 @@ const config = {
   sessionSecret: process.env.SESSION_SECRET,
   port: process.env.PORT,
   mongoUri: process.env.MONGO_URI,
-  eshopUri: process.env.ESHOP_URI,
+  eshopUri: process.env.ESHOP_URI + '&version=v2.0',
   url: process.env.URL,
 }
 
