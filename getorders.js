@@ -55,7 +55,7 @@ function legacyApi(orders) {
 //configurable orders read with ER api
 function getApiOrders (url, limit, date, after ) {
     return new Promise((resolve, reject) => {
-        let addToUrl = ''
+        let addToUrl = '&version=v2.0'
         if (limit) addToUrl = addToUrl + '&limit=' + limit
         let direction
         after ? direction =  '&after=' : direction =  '&before='
@@ -467,20 +467,20 @@ async function saveSale(items, storeID) {
    
     //action prepare
     if (storeID == 'Kotva') {
-        let actionReducer = 0.3
+        let actionReducer = 0.8
         let actionIndexes = []
         let actionReducerShoes = 0.8
         let actionIndexesShoes = []
-        const notInAction = [51101051,51101521,51102051,51102521,51601001,51601011,51601021,51601531,51601541,51601551,51602001,51602011,51602531,51602541,51603001,51603011,51603531,51603541]
+        const notInAction = []
         items.forEach((item, index) => {
             let actionItem = false
             let actionItemShoes = false
             //apparel
-            if (item.productId.length > 7 && item.productId.startsWith('51')) {  //|| inAction.find(i=> i == item.productId) !== undefined)
+            if (item.productId.length > 7 && item.productId.startsWith('52')) {  //|| inAction.find(i=> i == item.productId) !== undefined)
                 actionItem = true 
             //shoes
             } else { 
-                if (item.productId.length == 7 && item.productId[0] == 1) {
+                if (item.productId.length == 7 && (item.productId[0] == 2 || item.productId[0] == 8)) {
                     actionItemShoes = true 
                 }
             }
@@ -490,7 +490,7 @@ async function saveSale(items, storeID) {
         actionIndexes.forEach(index => {
             let reducer = actionReducer
             notInAction.forEach(item => {
-                if (item == items[index].productId) {reducer = 0.3}
+                if (item == items[index].productId) {reducer = 1}
             })
             items[index].storePrice = Math.round(items[index].storePrice * reducer)
         })
