@@ -179,6 +179,7 @@ async function getOrdersData(eshopUri) {
                 let sizeParts = product.variant_description.split(' ')
                 let size = sizeParts[2]
                 if (sizeParts[3] !== undefined) { size = size + ' ' + sizeParts[3]}
+                if (sizeParts[2] === "zima") { size = sizeParts[3]}
                 if (typeof(size) == "number" ) {size = size.toString()}
                 //if quantity is >1 push item 'quantity' times
                 let orderQuantity = product.count
