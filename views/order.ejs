@@ -74,7 +74,7 @@
                 <tr>
                     <td><%= index+1 %></td>
                     <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=3 width=100></img></td>
-                    <td><%= item.productId %></td>
+                    <td><a href="/return?item=<%= item.productId %>+<%= item.size %>"><%= item.productId %></a></td>
                     <td><%= item.size %></td>
                     <td><%= item.price + ' Kč' %></td>
                     <td><%= item.count %></td>

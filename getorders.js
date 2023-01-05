@@ -77,13 +77,15 @@ function getApiOrders (url, limit, date, after ) {
 async function getOrdersData(eshopUri) {
     let ordersList= []
     let productList= []
+    let ordersToReturn = []
     let productIndex= 0
+    const workStatus = ['c','d','n','g']
     try {
 	//add fresh and update new, paid and unpaid orders
         console.log('Getting orders from DB')
         const ordersToUpdate = await ordersCollection.find(
-            { vyrizeno : { $in: ['c','d','n','g'] } }, 
-            { sort: {'id_order': -1}, projection: { '_id': 0, 'id_order': 1}})
+            { vyrizeno : { $in: workStatus } }, 
+            { sort: {'id_order': -1}, projection: { '_id': 0, 'id_order': 1, 'vyrizeno': 1}})
             .toArray()
         console.log('done')
         const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}, projection: { '_id': 0, 'id_order': 1}})
@@ -108,215 +110,245 @@ async function getOrdersData(eshopUri) {
         for (let i=0; i<ordersToUpdate.length; i++) {
             let orderIdToUpdate = ordersToUpdate[i]['id_order']
             let orderIndex = apiOrders.findIndex(e => e['id_order'] === orderIdToUpdate)
-            let result
             if (orderIndex !== -1) {
-                result = await ordersCollection.replaceOne(
+                const newStatus = apiOrders[orderIndex]['vyrizeno']
+                const prevStatus = ordersToUpdate[i]['vyrizeno']
+                if (!workStatus.includes(newStatus) && workStatus.includes(prevStatus)) { ordersToReturn.push({id_order: orderIdToUpdate, newStatus, prevStatus})}
+                let result = await ordersCollection.replaceOne(
                     { 'id_order' : apiOrders[orderIndex]['id_order'] }, apiOrders[orderIndex])
                 if (result.modifiedCount === 1) updatedOrders++
             }
         }
         console.log(`${updatedOrders} orders updated from ${ordersToUpdate.length}`)
+        
+        let repeatListsCreation = true
+        let firstLoop = true
+        while (repeatListsCreation){
 
-        //read and process new, paid and unpaid orders
-        const dbQuery = { vyrizeno : { $in: ['c','d','n','g'] } }
-        const dbOptions = { sort: {'id_order': 1} }
-        const ordersSelection = await ordersCollection.find(dbQuery, dbOptions).toArray()
-        for (orderIndex = 0; orderIndex < ordersSelection.length; orderIndex++) {
-            const order = ordersSelection[orderIndex]
-            let status = ''
-            let toSend = false
-            if (order.gateway_payment_state && order.gateway_payment_state != "paid") status='Ne'
-            if (order.payment.nazev_platba == "Platba předem na účet" 
-                && (order.vyrizeno != "c" || order.vyrizeno != "g")) status='Ne'
-            if (order.gateway_payment_state == "paid" || order.vyrizeno == "c") status='Ano'
-            if (order.delivery.nazev_postovne == "Osobní odběr" 
-                && order.payment.nazev_platba == "Platba předem na účet" 
-                && order.vyrizeno == "g") status='Ano'
-            if (order.payment.nazev_platba == "Platba dobírkou" || status=='Ano') toSend = true
-            let phone = order.customer.delivery_information.phone
-            let psc = order.customer.delivery_information.zip
-            
-            //finding SK orders
-            let skOrder = ''
-            if ( ['0','8','9'].includes(psc[0]) ) skOrder = '?'
-            if (phone.slice(phone.length - 9, phone.length - 8) == "9") skOrder = '?'
-            const deliveryService= order.delivery.nazev_postovne.split(' - ')[0]
-            if (['PPL Slovensko', 'Zásilkovna Slovensko', 'DPD Slovensko'].includes(deliveryService)) skOrder = '!'
-            if (order.total_per_vat['20'] !== undefined) skOrder = '+'
+            //read and process new, paid and unpaid orders
+            const dbQuery = { vyrizeno : { $in: workStatus} }
+            const dbOptions = { sort: {'id_order': 1} }
+            const ordersSelection = await ordersCollection.find(dbQuery, dbOptions).toArray()
+            for (orderIndex = 0; orderIndex < ordersSelection.length; orderIndex++) {
+                const order = ordersSelection[orderIndex]
+                let status = ''
+                let toSend = false
+                if (order.gateway_payment_state && order.gateway_payment_state != "paid") status='Ne'
+                if (order.payment.nazev_platba == "Platba předem na účet" 
+                    && (order.vyrizeno != "c" || order.vyrizeno != "g")) status='Ne'
+                if (order.gateway_payment_state == "paid" || order.vyrizeno == "c") status='Ano'
+                if (order.delivery.nazev_postovne == "Osobní odběr" 
+                    && order.payment.nazev_platba == "Platba předem na účet" 
+                    && order.vyrizeno == "g") status='Ano'
+                if (order.payment.nazev_platba == "Platba dobírkou" || status=='Ano') toSend = true
+                let phone = order.customer.delivery_information.phone
+                let psc = order.customer.delivery_information.zip
+                
+                //finding SK orders
+                let skOrder = ''
+                if ( ['0','8','9'].includes(psc[0]) ) skOrder = '?'
+                if (phone.slice(phone.length - 9, phone.length - 8) == "9") skOrder = '?'
+                const deliveryService= order.delivery.nazev_postovne.split(' - ')[0]
+                if (['PPL Slovensko', 'Zásilkovna Slovensko', 'DPD Slovensko'].includes(deliveryService)) skOrder = '!'
+                if (order.total_per_vat['20'] !== undefined) skOrder = '+'
 
-            //Collect PPL data
-            let adress = order.customer.delivery_information.street
-            adress.trim()
-            let adrArr = adress.split(' ')
-            let dom = adrArr.pop()
-            adress = adrArr.join(' ')
-            if (phone.length !== 9) {
-                phone = phone.slice(phone.length - 9, phone.length)}
-            let dobirka = ''
-            if (order.payment.nazev_platba == "Platba dobírkou") {
-                if (order.total_per_vat['21'] == undefined) {
-                    dobirka = order.total_per_vat['20'].price_with_vat
-                } else {
-                    dobirka = order.total_per_vat['21'].price_with_vat
-                }
-            }
-            let pplData = {
-                'vs': order.number,
-                'poznamka': order.customer.delivery_information.note,
-                'osoba': order.customer.delivery_information.name,
-                'telefon': phone,
-                'email': order.customer.delivery_information.email,
-                'ulice': adress,
-                'dom': dom,
-                'mesto': order.customer.delivery_information.city,
-                'psc': psc,
-                'dobirka': dobirka,
-            }
-            
-            //productlist + assign stores and action 'n' or 'u'
-            for (i=order.row_list.length -1; i >= 0; i--) {
-                const product = order.row_list[i]
-                let productId = product.product_number
-                let sizeParts = product.variant_description.split(' ')
-                let size = sizeParts[2]
-                if (sizeParts[3] !== undefined) { size = size + ' ' + sizeParts[3]}
-                if (sizeParts[2] === "zima") { 
-                    size = sizeParts[3]
-                    if (size[1] == "+") {size = size[0]}
-                }
-                if (typeof(size) == "number" ) {size = size.toString()}
-                //if quantity is >1 push item 'quantity' times
-                let orderQuantity = product.count
-                while (orderQuantity>0) {
-
-                    //temporary solution to check more then one same item in orders, itemQuantity is for unsold items
-                    let itemQuantity = 1
-                    let sameOrderQuantity = 1
-                    let backwCounter = productList.length - 1
-                    while (backwCounter >= 0 ) {
-                        let prevItem = productList[backwCounter]
-                        if (productId === prevItem.productId && size === prevItem.size) {
-                            if (prevItem.action !== 'u') itemQuantity++
-                            if (prevItem.orderNumber === order.number) sameOrderQuantity++
-                        }
-                        backwCounter--
+                //Collect PPL data
+                let adress = order.customer.delivery_information.street
+                adress.trim()
+                let adrArr = adress.split(' ')
+                let dom = adrArr.pop()
+                adress = adrArr.join(' ')
+                if (phone.length !== 9) {
+                    phone = phone.slice(phone.length - 9, phone.length)}
+                let dobirka = ''
+                if (order.payment.nazev_platba == "Platba dobírkou") {
+                    if (order.total_per_vat['21'] == undefined) {
+                        dobirka = order.total_per_vat['20'].price_with_vat
+                    } else {
+                        dobirka = order.total_per_vat['21'].price_with_vat
                     }
-                    //also some code  at if code below
-                    let storeID = "Neni"
-                    let storePrice = 0
-                    let action = 'n'
-                    let saleDate = ""
-                    //check if sold
-                    let soldItems = []
-                    await salesCollection.find({
-                        items: {$elemMatch: { 
-                            orderId: order.number, 
+                }
+                let pplData = {
+                    'vs': order.number,
+                    'poznamka': order.customer.delivery_information.note,
+                    'osoba': order.customer.delivery_information.name,
+                    'telefon': phone,
+                    'email': order.customer.delivery_information.email,
+                    'ulice': adress,
+                    'dom': dom,
+                    'mesto': order.customer.delivery_information.city,
+                    'psc': psc,
+                    'dobirka': dobirka,
+                }
+                
+                //productlist + assign stores and action 'n' or 'u'
+                for (i=order.row_list.length -1; i >= 0; i--) {
+                    const product = order.row_list[i]
+                    let productId = product.product_number
+                    let sizeParts = product.variant_description.split(' ')
+                    let size = sizeParts[2]
+                    if (sizeParts[3] !== undefined) { size = size + ' ' + sizeParts[3]}
+                    if (sizeParts[2] === "zima") { 
+                        size = sizeParts[3]
+                        if (size[1] == "+") {size = size[0]}
+                    }
+                    if (typeof(size) == "number" ) {size = size.toString()}
+                    //if quantity is >1 push item 'quantity' times
+                    let orderQuantity = product.count
+                    while (orderQuantity>0) {
+
+                        //temporary solution to check more then one same item in orders, itemQuantity is for unsold items
+                        let itemQuantity = 1
+                        let sameOrderQuantity = 1
+                        let backwCounter = productList.length - 1
+                        while (backwCounter >= 0 ) {
+                            let prevItem = productList[backwCounter]
+                            if (productId === prevItem.productId && size === prevItem.size) {
+                                if (prevItem.action !== 'u') itemQuantity++
+                                if (prevItem.orderNumber === order.number) sameOrderQuantity++
+                            }
+                            backwCounter--
+                        }
+                        //also some code  at if code below
+                        let storeID = "Neni"
+                        let storePrice = 0
+                        let action = 'n'
+                        let saleDate = ""
+                        //check if sold
+                        let soldItems = []
+                        await salesCollection.find({
+                            items: {$elemMatch: { 
+                                orderId: order.number, 
+                                productId,
+                                size,
+                            }}
+                        }).forEach( sale => {
+                            sale.items.forEach( item => {
+                                if (item.productId === productId && item.size === size) soldItems.push({storeID: sale.storeID, date: sale.date, price: item.price})    
+                            })
+                        })
+                        if (soldItems.length >= sameOrderQuantity) { 
+                            action = 'u'
+                            storeID = soldItems[sameOrderQuantity-1].storeID
+                            saleDate = soldItems[sameOrderQuantity-1].date.slice(-5)
+                            storePrice = soldItems[sameOrderQuantity-1].price
+                        } else {
+                            //find candidate to sale
+                            let stock = await inventoryCollection.findOne({ model: productId, size })
+                            if (stock !== null) {
+                                let i=0
+                                let founded=false 
+                                while (!founded && i < stock.inventory.length) {
+                                    if (stock.inventory[i].quantity > 0) {
+                                        if (stock.inventory[i].quantity - itemQuantity >= 0) {
+                                            founded=true
+                                            storeID=stock.inventory[i].id
+                                            storePrice=stock.inventory[i].price
+                                        } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
+                                    }
+                                    i++
+                                }
+                            } else {storeID = "Nové"}
+                        }
+                        
+                        productList.unshift({
+                            orderId: order.id_order,
+                            orderNumber: order.number,
+                            productType: product.product_name,
                             productId,
                             size,
-                        }}
-                    }).forEach( sale => {
-                        sale.items.forEach( item => {
-                            if (item.productId === productId && item.size === size) soldItems.push({storeID: sale.storeID, date: sale.date, price: item.price})    
+                            price: product.price_per_unit_with_vat,
+                            count: 1, //always 1 instead of product.count,
+                            sale: toSend,
+                            delivery: order.delivery.nazev_postovne.split(' - ')[0],
+                            date: saleDate,
+                            storeID,
+                            action,
+                            storePrice,
+                            index: productIndex,
                         })
-                    })
-                    if (soldItems.length >= sameOrderQuantity) { 
-                        action = 'u'
-                        storeID = soldItems[sameOrderQuantity-1].storeID
-                        saleDate = soldItems[sameOrderQuantity-1].date.slice(-5)
-                        storePrice = soldItems[sameOrderQuantity-1].price
-                    } else {
-                        //find candidate to sale
-                        let stock = await inventoryCollection.findOne({ model: productId, size })
-                        if (stock !== null) {
-                            let i=0
-                            let founded=false 
-                            while (!founded && i < stock.inventory.length) {
-                                if (stock.inventory[i].quantity > 0) {
-                                    if (stock.inventory[i].quantity - itemQuantity >= 0) {
-                                        founded=true
-                                        storeID=stock.inventory[i].id
-                                        storePrice=stock.inventory[i].price
-                                    } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
-                                }
-                                i++
-                            }
-                        } else {storeID = "Nové"}
+                        productIndex++
+                        orderQuantity--
                     }
-                    
-                    productList.unshift({
-                        orderId: order.id_order,
-                        orderNumber: order.number,
-                        productType: product.product_name,
-                        productId,
-                        size,
-                        price: product.price_per_unit_with_vat,
-                        count: 1, //always 1 instead of product.count,
-                        sale: toSend,
-                        delivery: order.delivery.nazev_postovne.split(' - ')[0],
-                        date: saleDate,
-                        storeID,
-                        action,
-                        storePrice,
-                        index: productIndex,
-                    })
-                    productIndex++
-                    orderQuantity--
+                }
+
+                //ordersList
+                ordersList.unshift({
+                    id: order.id_order,
+                    number: order.number,
+                    name: order.customer.delivery_information.name,
+                    delivery: order.delivery.nazev_postovne.split(' - ')[0], 
+                    payment: order.payment.nazev_platba,
+                    status,
+                    date: order.origin.date.date.slice(5,16),
+                    toSend,
+                    sender: '',
+                    pplData,
+                    multiStore: false,
+                    skOrder,
+                    allItemSold: true,
+                })
+            }
+            
+            //define sender and order status
+            productList.forEach(item => {
+                const orderIndex = ordersList.findIndex(order => order.number == item.orderNumber)
+                let sender = item.storeID
+                if (!ordersList[orderIndex].multiStore && ordersList[orderIndex].sender != '') {
+                    if (sender === 'Kotva' && ordersList[orderIndex].sender !== sender
+                        || ordersList[orderIndex].sender == 'Kotva' && ordersList[orderIndex].sender !== sender) { ordersList[orderIndex].multiStore = true }
+                }
+                if (sender === 'Outlet') sender = 'Harfa'
+                if (item.delivery === "Osobní odběr") {
+                    if (sender != 'Kotva') { ordersList[orderIndex].multiStore = true }
+                    sender = 'Kotva'
+                }
+                if (ordersList[orderIndex].sender === ''
+                    || (ordersList[orderIndex].sender === 'Kotva' && sender === 'Harfa')) 
+                    { ordersList[orderIndex].sender = sender }
+                if (ordersList[orderIndex].allItemSold && item.date == '') ordersList[orderIndex].allItemSold = false
+            })
+
+            //add returns to productList
+            const returns = returnsCollection.find({'items.saved': false})
+            await returns.forEach(ret => {
+                ret.items.forEach(item => {
+                    if (!item.saved) {
+                        productList.push({
+                            ...item,
+                            action: 'n',
+                            sale: true,
+                            ret: true,
+                            index: productIndex,
+                        })
+                        productIndex++
+                    }
+                })
+            })
+
+            //orders status return
+            let returnedOrders = 0
+            for (let i=0; i<ordersToReturn.length; i++) {
+                const { id_order, newStatus, prevStatus } = ordersToReturn[i]
+                let returnStatus = firstLoop
+                const orderListItem = ordersList.find(e => e.id == id_order)
+                if (orderListItem && !orderListItem.allItemSold) { returnStatus = true }
+                if (newStatus == "e") { returnStatus = false }
+                if (returnStatus) {
+                    const result = await ordersCollection.updateOne(
+                        { id_order }, {$set : {vyrizeno: prevStatus}})
+                    if (result.modifiedCount === 1) returnedOrders++
                 }
             }
-
-            //ordersList
-            ordersList.unshift({
-                id: order.id_order,
-                number: order.number,
-                name: order.customer.delivery_information.name,
-                delivery: order.delivery.nazev_postovne.split(' - ')[0], 
-                payment: order.payment.nazev_platba,
-                status,
-                date: order.origin.date.date.slice(5,16),
-                toSend,
-                sender: '',
-                pplData,
-                multiStore: false,
-                skOrder,
-                allItemSold: true,
-            })
+            console.log(`${returnedOrders} orders status returned from ${ordersToReturn.length}`)
+            if (firstLoop) { firstLoop = false }
+            if (returnedOrders === 0) { 
+                repeatListsCreation = false 
+            } else {
+                ordersList = []
+                productList = []
+            }
         }
-        
-        //define sender and order status
-        productList.forEach(item => {
-            const orderIndex = ordersList.findIndex(order => order.number == item.orderNumber)
-            let sender = item.storeID
-            if (!ordersList[orderIndex].multiStore && ordersList[orderIndex].sender != '') {
-                if (sender === 'Kotva' && ordersList[orderIndex].sender !== sender
-                    || ordersList[orderIndex].sender == 'Kotva' && ordersList[orderIndex].sender !== sender) { ordersList[orderIndex].multiStore = true }
-            }
-            if (sender === 'Outlet') sender = 'Harfa'
-            if (item.delivery === "Osobní odběr") {
-                if (sender != 'Kotva') { ordersList[orderIndex].multiStore = true }
-                sender = 'Kotva'
-            }
-            if (ordersList[orderIndex].sender === ''
-                || (ordersList[orderIndex].sender === 'Kotva' && sender === 'Harfa')) 
-                { ordersList[orderIndex].sender = sender }
-            if (ordersList[orderIndex].allItemSold && item.date == '') ordersList[orderIndex].allItemSold = false
-        })
-
-        //add returns to productList
-        const returns = returnsCollection.find({'items.saved': false})
-        await returns.forEach(ret => {
-            ret.items.forEach(item => {
-                if (!item.saved) {
-                    productList.push({
-                        ...item,
-                        action: 'n',
-                        sale: true,
-                        ret: true,
-                        index: productIndex,
-                    })
-                    productIndex++
-                }
-            })
-        })
 
     } catch(err) {
         console.log(err)
@@ -340,12 +372,14 @@ async function getOrder(orderID) {
         }
         let items = []
         order.row_list.forEach(product => {
+            let size = product.variant_description.split(' ')[2]
+            if (size == "zima") { size = product.variant_description.split(' ')[3]}
             items.push({
                 orderId: order.id_order,
                 orderNumber: order.number,
                 productType: product.product_name,
                 productId: product.product_number,
-                size: product.variant_description.split(' ')[2],
+                size,
                 price: product.price_total_with_vat,
                 count: product.count,
             })
@@ -373,16 +407,27 @@ async function getOrder(orderID) {
                     i++
                 }
             } else {storeID = "Nové"}
-            let sold = await salesCollection.findOne({
-                items: {$elemMatch: { 
-                    orderId: product.orderNumber, 
-                    productId: product.productId,
-                    size: product.size,
-                }}
-            })
+            let query = {
+                    items: {$elemMatch: { 
+                        orderId: product.orderNumber, 
+                        productId: product.productId,
+                        size: product.size,
+                        count: {$gt: 0},
+                    }}
+                }
+            if (product.count < 0) { 
+                query = {
+                    items: {$elemMatch: { 
+                        productId: product.productId,
+                        size: product.size,
+                        count: {$lt: 0},
+                    }}
+                }
+            }
+            let sold = await salesCollection.findOne(query)
             if (sold !== null) { 
-                storeID = sold.storeID
                 soldItem = sold.items.find(e => (e.productId === product.productId && e.size === product.size ))
+                storeID = sold.storeID
                 storePrice = soldItem.price
                 soldDate = sold.date
             }
@@ -610,6 +655,8 @@ async function getOrdersByItem (item) {
                     "e": "Zrušená",
                     "f": "Dobropis",
                     "g": "Osobní odběr",
+                    "h": "Vyzvednutá",
+                    1: "Nepřevzatá",
                   }
                   let status = statusVariants[order.vyrizeno] 
                   orders.unshift({

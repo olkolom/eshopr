@@ -1,4 +1,6 @@
 node_modules/
+node_modules
+node_modules.nosync/
 .env
 .DS_Store
 build
@@ -6,3 +8,5 @@ npm-debug.log
 users.json
 public/ppl.csv
 test.js
+package-lock.json
+package-lock.json
