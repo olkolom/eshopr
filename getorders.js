@@ -328,21 +328,29 @@ async function getOrdersData(eshopUri) {
 
             //orders status return
             let returnedOrders = 0
+            let approvedOrders = 0
+            console.log(`Orders to return: ${ordersToReturn.length}, orders to view: ${ordersList.length}`)
             for (let i=0; i<ordersToReturn.length; i++) {
                 const { id_order, newStatus, prevStatus } = ordersToReturn[i]
-                let returnStatus = firstLoop
                 const orderListItem = ordersList.find(e => e.id == id_order)
-                if (orderListItem && !orderListItem.allItemSold) { returnStatus = true }
-                if (newStatus == "e") { returnStatus = false }
-                if (returnStatus) {
+                let returnOldStatus = true
+                if (orderListItem && orderListItem.allItemSold) { returnOldStatus = false } //on first loop every updated orders ain't at ordersList, so status will return to previous 
+                if (newStatus == "e") { returnOldStatus = false } //TODO implement canceled orders logic
+                if (returnOldStatus) {
                     const result = await ordersCollection.updateOne(
                         { id_order }, {$set : {vyrizeno: prevStatus}})
                     if (result.modifiedCount === 1) returnedOrders++
+                } else {
+                    if (!firstLoop) {
+                        const result = await ordersCollection.updateOne(
+                            { id_order }, {$set : {vyrizeno: newStatus}})
+                        if (result.modifiedCount === 1) approvedOrders++
+                    }
                 }
             }
-            console.log(`${returnedOrders} orders status returned from ${ordersToReturn.length}`)
+            console.log(`${returnedOrders} orders status returned and ${approvedOrders} don't from ${ordersToReturn.length}`)
             if (firstLoop) { firstLoop = false }
-            if (returnedOrders === 0) { 
+            if (returnedOrders === 0 && approvedOrders === 0) { 
                 repeatListsCreation = false 
             } else {
                 ordersList = []
