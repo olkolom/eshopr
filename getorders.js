@@ -121,9 +121,9 @@ async function getOrdersData(eshopUri) {
         }
         console.log(`${updatedOrders} orders updated from ${ordersToUpdate.length}`)
         
-        let repeatListsCreation = true
-        let firstLoop = true
-        while (repeatListsCreation){
+        let loopCounter = 1
+        let lastLoop = false
+        while (!lastLoop){
 
             //read and process new, paid and unpaid orders
             const dbQuery = { vyrizeno : { $in: workStatus} }
@@ -224,7 +224,7 @@ async function getOrdersData(eshopUri) {
                             }}
                         }).forEach( sale => {
                             sale.items.forEach( item => {
-                                if (item.productId === productId && item.size === size) soldItems.push({storeID: sale.storeID, date: sale.date, price: item.price})    
+                                if (item.productId === productId && item.size === size && item.count > 0) soldItems.push({storeID: sale.storeID, date: sale.date, price: item.price})    
                             })
                         })
                         if (soldItems.length >= sameOrderQuantity) { 
@@ -341,7 +341,7 @@ async function getOrdersData(eshopUri) {
                         { id_order }, {$set : {vyrizeno: prevStatus}})
                     if (result.modifiedCount === 1) returnedOrders++
                 } else {
-                    if (!firstLoop) {
+                    if (loopCounter !== 1) {
                         const result = await ordersCollection.updateOne(
                             { id_order }, {$set : {vyrizeno: newStatus}})
                         if (result.modifiedCount === 1) approvedOrders++
@@ -349,13 +349,12 @@ async function getOrdersData(eshopUri) {
                 }
             }
             console.log(`${returnedOrders} orders status returned and ${approvedOrders} don't from ${ordersToReturn.length}`)
-            if (firstLoop) { firstLoop = false }
-            if (returnedOrders === 0 && approvedOrders === 0) { 
-                repeatListsCreation = false 
-            } else {
+            if (returnedOrders === 0 && approvedOrders === 0 || loopCounter < 3) { lastLoop = true }
+            if (!lastLoop) {
                 ordersList = []
                 productList = []
             }
+            loopCounter++
         }
 
     } catch(err) {
