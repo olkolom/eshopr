@@ -523,7 +523,7 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (storeID == '') {
+    if (storeID == 'Kotva') {
         let actionReducer = 0.8
         let actionIndexes = []
         let actionReducerShoes = 0.8
@@ -537,12 +537,12 @@ async function saveSale(items, storeID) {
                 actionItem = true 
             //shoes
             } else { 
-                if (item.productId.length == 7 && (item.productId[0] == 2 || item.productId[0] == 8)) {
+                if (item.productId.length == 7 && (item.productId[0] == 2)) {
                     actionItemShoes = true 
                 }
             }
             if (actionItem && item.count > 0) actionIndexes.push(index)
-            if (actionItemShoes && item.count>0) actionIndexesShoes.push(index)
+            if (actionItemShoes && item.count > 0) actionIndexesShoes.push(index)
         })
         actionIndexes.forEach(index => {
             let reducer = actionReducer
