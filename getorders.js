@@ -150,7 +150,7 @@ async function getOrdersData(eshopUri) {
                 if (phone.slice(phone.length - 9, phone.length - 8) == "9") skOrder = '?'
                 const deliveryService= order.delivery.nazev_postovne.split(' - ')[0]
                 if (['PPL Slovensko', 'Zásilkovna Slovensko', 'DPD Slovensko'].includes(deliveryService)) skOrder = '!'
-                if (order.total_per_vat['20'] !== undefined) skOrder = '+'
+                if (order.total_per_vat['20'] !== undefined || order.total_per_vat[0] !== undefined) skOrder = '+'
 
                 //Collect PPL data
                 let adress = order.customer.delivery_information.street
@@ -163,7 +163,11 @@ async function getOrdersData(eshopUri) {
                 let dobirka = ''
                 if (order.payment.nazev_platba == "Platba dobírkou") {
                     if (order.total_per_vat['21'] == undefined) {
-                        dobirka = order.total_per_vat['20'].price_with_vat
+                        if (order.total_per_vat['20']) {
+                            dobirka = order.total_per_vat['20'].price_with_vat
+                        } else {
+                            dobirka = order.total_per_vat[0].price_with_vat
+                        }
                     } else {
                         dobirka = order.total_per_vat['21'].price_with_vat
                     }
@@ -339,17 +343,20 @@ async function getOrdersData(eshopUri) {
                 if (returnOldStatus) {
                     const result = await ordersCollection.updateOne(
                         { id_order }, {$set : {vyrizeno: prevStatus}})
-                    if (result.modifiedCount === 1) returnedOrders++
+                        if (result) returnedOrders++
+                    else console.log("ret",id_order, prevStatus, newStatus)
                 } else {
                     if (loopCounter !== 1) {
                         const result = await ordersCollection.updateOne(
                             { id_order }, {$set : {vyrizeno: newStatus}})
                         if (result.modifiedCount === 1) approvedOrders++
+                        else console.log("app",id_order, prevStatus, newStatus)
                     }
                 }
             }
             console.log(`${returnedOrders} orders status returned and ${approvedOrders} don't from ${ordersToReturn.length}`)
-            if (returnedOrders === 0 && approvedOrders === 0 || loopCounter < 3) { lastLoop = true }
+            if (returnedOrders === 0 && approvedOrders === 0 || loopCounter > 2) { lastLoop = true }
+            if (loopCounter === 2) { ordersToReturn = [] }
             if (!lastLoop) {
                 ordersList = []
                 productList = []
@@ -523,7 +530,7 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (storeID == 'Kotva') {
+    if (storeID == 'Kotva' || storeID == 'Outlet') {
         let actionReducer = 0.8
         let actionIndexes = []
         let actionReducerShoes = 0.8
