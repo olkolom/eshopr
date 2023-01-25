@@ -544,7 +544,7 @@ async function saveSale(items, storeID) {
                 actionItem = true 
             //shoes
             } else { 
-                if (item.productId.length == 7 && (item.productId[0] == 2)) {
+                if (item.productId.length == 7 && ((item.productId[0] == 2) || (item.productId[0] == 8))) {
                     actionItemShoes = true 
                 }
             }
