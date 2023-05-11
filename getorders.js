@@ -228,7 +228,9 @@ async function getOrdersData(eshopUri) {
                             }}
                         }).forEach( sale => {
                             sale.items.forEach( item => {
-                                if (item.productId === productId && item.size === size && item.count > 0) soldItems.push({storeID: sale.storeID, date: sale.date, price: item.price})    
+                                if (item.orderId === order.number && item.productId === productId && item.size === size && item.count > 0) {
+                                    soldItems.push({storeID: sale.storeID, date: sale.date, price: item.price})
+                                }
                             })
                         })
                         if (soldItems.length >= sameOrderQuantity) { 
@@ -533,18 +535,18 @@ async function saveSale(items, storeID) {
     if (storeID == 'Kotva' || storeID == 'Outlet') {
         let actionReducer = 0.8
         let actionIndexes = []
-        let actionReducerShoes = 0.8
+        let actionReducerShoes = 0.7
         let actionIndexesShoes = []
         const notInAction = []
         items.forEach((item, index) => {
             let actionItem = false
             let actionItemShoes = false
             //apparel
-            if (item.productId.length > 7 && item.productId.startsWith('52')) {  //|| inAction.find(i=> i == item.productId) !== undefined)
-                actionItem = true 
+            if (storeID === 'Kotva' && item.storePrice !== item.price) {  //(item.productId.length > 7 && item.productId.startsWith('53') && item.storePrice || inAction.find(i=> i == item.productId) !== undefined)
+                actionItem = true
             //shoes
             } else { 
-                if (item.productId.length == 7 && ((item.productId[0] == 2) || (item.productId[0] == 8))) {
+                if (storeID === 'Outlet' && item.productId.length == 7 && (item.productId[0] == 1)) {
                     actionItemShoes = true 
                 }
             }
@@ -556,11 +558,10 @@ async function saveSale(items, storeID) {
             notInAction.forEach(item => {
                 if (item == items[index].productId) {reducer = 1}
             })
-            items[index].storePrice = Math.round(items[index].storePrice * reducer)
+            items[index].storePrice = items[index].price //Math.round(items[index].storePrice * reducer)
         })
         actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
     }
-
     
     let date = new Date().toISOString().slice(0,10)
     let newSale
