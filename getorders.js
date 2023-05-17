@@ -532,7 +532,7 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (storeID == 'Kotva' || storeID == 'Outlet') {
+    if (storeID == 'Kotva') {
         let actionReducer = 0.8
         let actionIndexes = []
         let actionReducerShoes = 0.7
