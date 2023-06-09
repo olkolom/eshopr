@@ -23,10 +23,6 @@ const config = {
 
 const app = express()
 
-const csvParser = new json2csv.Parser({
-  fields : ['vs','poznamka','osoba','telefon','email','ulice','dom','mesto','psc','dobirka']
-})
-
 const dataSource = dbModule.init(config.mongoUri)
 
 const sessionStore = new MongoDBStore({
@@ -205,6 +201,10 @@ app.get("/returns", (req, res)=> {
 })
 
 app.get("/ppl", (req, res, next)=> {
+  const csvParser = new json2csv.Parser({
+    fields: ['vs','jmeno','telefon','email','ulice','mesto','psc','zeme','dobirka','poznamka'],
+    delimiter: ';',
+  })
   if (req.query.ord !== undefined ) {
     let orderNumbers
     Array.isArray(req.query.ord) ? orderNumbers=req.query.ord : orderNumbers=[req.query.ord]

@@ -13,7 +13,12 @@
         orders: ordersList.filter(order => order.delivery.slice(0,3) == 'DPD' && order.toSend),
         name: 'DPD',
         cbTag: 'dp'}
-) %>
+    ) %>
+    <%- include('partials/tab_orders', {
+        orders: ordersList.filter(order => order.delivery.slice(0,3) == 'GLS' && order.toSend),
+        name: 'GLS',
+        cbTag: 'gl'}
+    ) %>
     <%- include('partials/tab_orders', {
             orders: ordersList.filter(order => order.delivery.slice(0,3) == 'Zás' && order.toSend),
             name: 'Zásilkovna',

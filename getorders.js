@@ -149,15 +149,21 @@ async function getOrdersData(eshopUri) {
                 if ( ['0','8','9'].includes(psc[0]) ) skOrder = '?'
                 if (phone.slice(phone.length - 9, phone.length - 8) == "9") skOrder = '?'
                 const deliveryService= order.delivery.nazev_postovne.split(' - ')[0]
-                if (['PPL Slovensko', 'Zásilkovna Slovensko', 'DPD Slovensko'].includes(deliveryService)) skOrder = '!'
-                if (order.total_per_vat['20'] !== undefined || order.total_per_vat[0] !== undefined) skOrder = '+'
+                const slDelivery = ['GLS Slovensko', 'GLS ParcelShop Slovensko', 'PPL Slovensko', 'Zásilkovna Slovensko', 'DPD Slovensko']
+                if (slDelivery.includes(deliveryService)) skOrder = '!'
+                const currency = order.selected_currency.code;
+                const exchangeRate = order.selected_currency.exchangeRate;
+                if (currency === 'EUR' && (order.total_per_vat['20'] !== undefined || order.total_per_vat[0] !== undefined)) { skOrder = '+' };
 
                 //Collect PPL data
-                let adress = order.customer.delivery_information.street
+                let adress = order.customer.delivery_information.street;
+                let ulice = adress.replaceAll(',', ' ');
+                /*
                 adress.trim()
                 let adrArr = adress.split(' ')
                 let dom = adrArr.pop()
                 adress = adrArr.join(' ')
+                */
                 if (phone.length !== 9) {
                     phone = phone.slice(phone.length - 9, phone.length)}
                 let dobirka = ''
@@ -172,17 +178,26 @@ async function getOrdersData(eshopUri) {
                         dobirka = order.total_per_vat['21'].price_with_vat
                     }
                 }
+                if (currency === 'EUR') { 
+                    const mainPart = Math.round(dobirka * exchangeRate * 10) / 10;
+                    const ending = Math.round(dobirka * exchangeRate * 100) % 10;
+                    console.log(mainPart, ending)
+                    let increment = 0;
+                    if (ending > 0 && ending <= 5) { increment = 0.05 }
+                    if (ending > 0 && ending > 5) { increment = 0.1 }
+                    dobirka = mainPart + increment;
+                }
                 let pplData = {
                     'vs': order.number,
                     'poznamka': order.customer.delivery_information.note,
-                    'osoba': order.customer.delivery_information.name,
+                    'jmeno': order.customer.delivery_information.name,
                     'telefon': phone,
+                    'zeme': skOrder === '' ? 'CZ' : 'SK',
                     'email': order.customer.delivery_information.email,
-                    'ulice': adress,
-                    'dom': dom,
+                    ulice,
                     'mesto': order.customer.delivery_information.city,
-                    'psc': psc,
-                    'dobirka': dobirka,
+                    psc,
+                    dobirka,
                 }
                 
                 //productlist + assign stores and action 'n' or 'u'
