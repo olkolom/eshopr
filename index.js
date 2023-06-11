@@ -211,7 +211,7 @@ app.get("/ppl", (req, res, next)=> {
     const ordersPPL = []
     orderNumbers.forEach(orderNumber => {
       let order = req.session.data.ordersList.find(item => item.id == orderNumber)
-      ordersPPL.unshift(order.pplData)
+      ordersPPL.push(order.pplData)
     })
     const csv = csvParser.parse(ordersPPL)
     const file = __dirname + '/public/ppl.csv'

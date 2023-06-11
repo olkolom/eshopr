@@ -157,7 +157,7 @@ async function getOrdersData(eshopUri) {
 
                 //Collect PPL data
                 let adress = order.customer.delivery_information.street;
-                let ulice = adress.replaceAll(',', ' ');
+		let ulice = adress.replace(',', ' ');
                 /*
                 adress.trim()
                 let adrArr = adress.split(' ')
@@ -181,7 +181,6 @@ async function getOrdersData(eshopUri) {
                 if (currency === 'EUR') { 
                     const mainPart = Math.round(dobirka * exchangeRate * 10) / 10;
                     const ending = Math.round(dobirka * exchangeRate * 100) % 10;
-                    console.log(mainPart, ending)
                     let increment = 0;
                     if (ending > 0 && ending <= 5) { increment = 0.05 }
                     if (ending > 0 && ending > 5) { increment = 0.1 }
