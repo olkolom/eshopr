@@ -156,16 +156,27 @@ async function getOrdersData(eshopUri) {
                 if (currency === 'EUR' && (order.total_per_vat['20'] !== undefined || order.total_per_vat[0] !== undefined)) { skOrder = '+' };
 
                 //Collect PPL data
-                let adress = order.customer.delivery_information.street;
-		let ulice = adress.replace(',', ' ');
-                /*
-                adress.trim()
-                let adrArr = adress.split(' ')
-                let dom = adrArr.pop()
-                adress = adrArr.join(' ')
-                */
+                const deliveryType = order.delivery.nazev_postovne;
+                const isPoint = deliveryType.startsWith('GLS ParcelShop');
+                let pointID = '';
+                if (isPoint) {
+                    const pointName = deliveryType.split('(')[1].split(')')[0];
+                    if (pointName.length > 0) {
+                        const point = await glsPoints.findOne({ 'Name': pointName });
+                        if (point && point.ID) { 
+                            pointID = point.ID 
+                        } else {
+                            //TODO refresh GLS points collections
+                            console.log(`PointID not found for ${pointName} order ${order.id_order}`)
+                        }
+                    } else { console.log (`Problem with decoding point name from ${deliveryType}`)}
+                };
+                const services = isPoint ? 'PSD(' + pointID + ')' : '';
+		        const ulice = order.customer.delivery_information.street.replace(',', ' ');
+                const jmeno = order.customer.delivery_information.name;
                 if (phone.length !== 9) {
-                    phone = phone.slice(phone.length - 9, phone.length)}
+                    phone = phone.slice(phone.length - 9, phone.length)
+                };
                 let dobirka = ''
                 if (order.payment.nazev_platba == "Platba dobírkou") {
                     if (order.total_per_vat['21'] == undefined) {
@@ -189,7 +200,7 @@ async function getOrdersData(eshopUri) {
                 let pplData = {
                     'vs': order.number,
                     'poznamka': order.customer.delivery_information.note,
-                    'jmeno': order.customer.delivery_information.name,
+                    jmeno,
                     'telefon': phone,
                     'zeme': skOrder === '' ? 'CZ' : 'SK',
                     'email': order.customer.delivery_information.email,
@@ -197,6 +208,7 @@ async function getOrdersData(eshopUri) {
                     'mesto': order.customer.delivery_information.city,
                     psc,
                     dobirka,
+                    services,
                 }
                 
                 //productlist + assign stores and action 'n' or 'u'
@@ -722,7 +734,7 @@ async function getItem (item) {
     return searchedItem
 }
 
-var ordersCollection, inventoryCollection, salesCollection, returnsCollection
+var ordersCollection, inventoryCollection, salesCollection, returnsCollection, glsPoints
 
 function init (mongoUri) {
     const mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true })
@@ -734,6 +746,7 @@ function init (mongoUri) {
             inventoryCollection = db.collection('variants')
             salesCollection = db.collection('sales')
             returnsCollection = db.collection('returns')
+            glsPoints = mongoClient.db('gls').collection('points');
         })
     }
     return {

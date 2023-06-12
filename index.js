@@ -202,7 +202,7 @@ app.get("/returns", (req, res)=> {
 
 app.get("/ppl", (req, res, next)=> {
   const csvParser = new json2csv.Parser({
-    fields: ['vs','jmeno','telefon','email','ulice','mesto','psc','zeme','dobirka','poznamka'],
+    fields: ['vs','jmeno','telefon','email','ulice','mesto','psc','zeme','dobirka','poznamka', 'services'],
     delimiter: ';',
   })
   if (req.query.ord !== undefined ) {
