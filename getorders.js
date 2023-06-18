@@ -160,8 +160,9 @@ async function getOrdersData(eshopUri) {
                 const isPoint = deliveryType.startsWith('GLS ParcelShop');
                 let pointID = '';
                 if (isPoint) {
-                    const pointName = deliveryType.split('(')[1].split(')')[0];
-                    if (pointName.length > 0) {
+                    const pointNameStart = deliveryType.indexOf('(');
+                    const pointName = deliveryType.slice(pointNameStart + 1, deliveryType.length - 1);
+                    if (pointName.length > 0 && pointNameStart !== -1) {
                         const point = await glsPoints.findOne({ 'Name': pointName });
                         if (point && point.ID) { 
                             pointID = point.ID 
