@@ -581,13 +581,10 @@ async function saveSale(items, storeID) {
             if (actionItemShoes && item.count > 0) actionIndexesShoes.push(index)
         })
         actionIndexes.forEach(index => {
-            let reducer = actionReducer
-            notInAction.forEach(item => {
-                if (item == items[index].productId) {reducer = 1}
-            })
-            items[index].storePrice = items[index].price //Math.round(items[index].storePrice * reducer)
+            items[index].storePrice = items[index].productId.startsWith('53') ? items[index].price - 1 : items[index].price
         })
-        actionIndexesShoes.forEach(index => items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes))
+        actionIndexesShoes.forEach(index => {
+        })
     }
     
     let date = new Date().toISOString().slice(0,10)
