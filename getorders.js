@@ -163,12 +163,18 @@ async function getOrdersData(eshopUri) {
                     const pointNameStart = deliveryType.indexOf('(');
                     const pointName = deliveryType.slice(pointNameStart + 1, deliveryType.length - 1);
                     if (pointName.length > 0 && pointNameStart !== -1) {
-                        const point = await glsPoints.findOne({ 'Name': pointName });
-                        if (point && point.ID) { 
-                            pointID = point.ID 
+                        const pointIDStart = pointName.indexOf('[');
+                        if (pointIDStart !== -1) {
+                            pointID = pointName.slice(pointIDStart + 1, pointName.length - 1);
                         } else {
-                            //TODO refresh GLS points collections
-                            console.log(`PointID not found for ${pointName} order ${order.id_order}`)
+                            //looking for pointID at DB
+                            const point = await glsPoints.findOne({ 'Name': pointName });
+                            if (point && point.ID) { 
+                                pointID = point.ID 
+                            } else {
+                                //TODO refresh GLS points collections
+                                console.log(`PointID not found for ${pointName} order ${order.id_order}`)
+                            }
                         }
                     } else { console.log (`Problem with decoding point name from ${deliveryType}`)}
                 };
