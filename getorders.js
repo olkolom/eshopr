@@ -198,14 +198,14 @@ async function getOrdersData(eshopUri) {
                         dobirka = order.total_per_vat['21'].price_with_vat
                     }
                     */
-                }
-                if (currency === 'EUR') { 
-                    const mainPart = Math.round(dobirka * exchangeRate * 100) / 100;
-                    const ending = Math.round(dobirka * exchangeRate * 100) % 10;
-                    let increment = 0;
-                    if (ending > 0 && ending <= 5) { increment = 0.05 - ending / 100 }
-                    if (ending > 0 && ending > 5) { increment = 0.1 - ending / 100 }
-                    dobirka = mainPart + increment;
+                    if (currency === 'EUR') { 
+                        const mainPart = Math.round(dobirka * exchangeRate * 100) / 100;
+                        const ending = Math.round(dobirka * exchangeRate * 100) % 10;
+                        let increment = 0;
+                        if (ending > 0 && ending <= 5) { increment = 0.05 - ending / 100 }
+                        if (ending > 0 && ending > 5) { increment = 0.1 - ending / 100 }
+                        dobirka = mainPart + increment;
+                    }
                 }
                 let pplData = {
                     'vs': order.number,
