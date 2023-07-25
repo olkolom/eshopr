@@ -186,6 +186,8 @@ async function getOrdersData(eshopUri) {
                 };
                 let dobirka = ''
                 if (order.payment.nazev_platba == "Platba dobírkou") {
+                    dobirka = order.total.price_with_vat;
+                    /*
                     if (order.total_per_vat['21'] == undefined) {
                         if (order.total_per_vat['20']) {
                             dobirka = order.total_per_vat['20'].price_with_vat
@@ -195,13 +197,14 @@ async function getOrdersData(eshopUri) {
                     } else {
                         dobirka = order.total_per_vat['21'].price_with_vat
                     }
+                    */
                 }
                 if (currency === 'EUR') { 
-                    const mainPart = Math.round(dobirka * exchangeRate * 10) / 10;
+                    const mainPart = Math.round(dobirka * exchangeRate * 100) / 100;
                     const ending = Math.round(dobirka * exchangeRate * 100) % 10;
                     let increment = 0;
-                    if (ending > 0 && ending <= 5) { increment = 0.05 }
-                    if (ending > 0 && ending > 5) { increment = 0.1 }
+                    if (ending > 0 && ending <= 5) { increment = 0.05 - ending / 100 }
+                    if (ending > 0 && ending > 5) { increment = 0.1 - ending / 100 }
                     dobirka = mainPart + increment;
                 }
                 let pplData = {
@@ -565,33 +568,19 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (storeID == '') {
-        let actionReducer = 0.8
-        let actionIndexes = []
-        let actionReducerShoes = 0.7
-        let actionIndexesShoes = []
-        const notInAction = []
+    if (storeID === 'Kotva') {
+        let actionReducer = 0.8;
+        let actionReducerShoes = 0.7;
+        const notInAction = [];
         items.forEach((item, index) => {
-            let actionItem = false
-            let actionItemShoes = false
             //apparel
-            if (storeID === 'Kotva' && item.storePrice !== item.price) {  //(item.productId.length > 7 && item.productId.startsWith('53') && item.storePrice || inAction.find(i=> i == item.productId) !== undefined)
-                actionItem = true
+            if (item.productId.length > 7) {
+                if (item.storePrice !== item.price) { items[index].storePrice = item.price }
             //shoes
             } else { 
-                if (storeID === 'Outlet' && item.productId.length == 7 && (item.productId[0] == 1)) {
-                    actionItemShoes = true 
-                }
             }
-            if (actionItem && item.count > 0) actionIndexes.push(index)
-            if (actionItemShoes && item.count > 0) actionIndexesShoes.push(index)
-        })
-        actionIndexes.forEach(index => {
-            items[index].storePrice = items[index].productId.startsWith('53') ? items[index].price - 1 : items[index].price
-        })
-        actionIndexesShoes.forEach(index => {
-        })
-    }
+        });
+    };
     
     let date = new Date().toISOString().slice(0,10)
     let newSale
