@@ -578,7 +578,7 @@ async function saveSale(items, storeID) {
                 if (item.storePrice !== item.price) { items[index].storePrice = item.price }
             //shoes
             } else {
-                if (item.productId.startsWith('3')) { items[index].storePrice *= actionReducerShoes }
+                if (item.productId.startsWith('3') && item.price > 0) { items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes) }
             }
         });
     };
