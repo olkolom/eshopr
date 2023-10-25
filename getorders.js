@@ -568,17 +568,19 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (storeID === 'Kotva') {
-        let actionReducer = 0.8;
-        let actionReducerShoes = 0.7;
+    if (['Outlet', 'Kotva'].includes(storeID)) {
+        let actionReducer = 0.7;
+        let actionReducerShoes = 0.8;
         const notInAction = [];
         items.forEach((item, index) => {
             //apparel
             if (item.productId.length > 7) {
-                if (item.storePrice !== item.price) { items[index].storePrice = item.price }
+                if (storeID === 'Kotva' && item.storePrice !== item.price) { items[index].storePrice = item.price }
+                if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
             //shoes
             } else {
-                if (item.productId.startsWith('3') && item.price > 0) { items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes) }
+                if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
+                if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes) }
             }
         });
     };
