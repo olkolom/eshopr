@@ -90,8 +90,8 @@ async function getOrdersData(eshopUri) {
         console.log('done')
         const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}, projection: { '_id': 0, 'id_order': 1}})
         const lastDbOrderId = lastDbOrder.id_order
-        const lastApiOrder = await getApiOrders(eshopUri,1)
-        const lastApiOrderId = lastApiOrder[0].id_order
+        //const lastApiOrder = await getApiOrders(eshopUri,1)
+        const lastApiOrderId = lastDbOrderId //lastApiOrder[0].id_order
         let firstOrderToUpdate = lastDbOrder
         if (ordersToUpdate.length > 0) { firstOrderToUpdate = ordersToUpdate[ordersToUpdate.length - 1]['id_order'] }
         let ordersCount = lastApiOrderId - firstOrderToUpdate + 1
@@ -99,7 +99,7 @@ async function getOrdersData(eshopUri) {
         let newOrdersCount = lastApiOrderId - lastDbOrderId
         if (newOrdersCount > 99) newOrdersCount = 99 //TODO implement page read from api
         console.log('Getting orders from API')
-        let apiOrders = await getApiOrders(eshopUri, ordersCount)
+        let apiOrders = [] //await getApiOrders(eshopUri, ordersCount)
         console.log('done')
         const freshApiOrders = apiOrders.slice(0, newOrdersCount)
         if (freshApiOrders.length > 0) {
