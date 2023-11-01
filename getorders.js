@@ -585,14 +585,16 @@ async function saveSale(items, storeID) {
         let actionReducerShoes = 0.8;
         const notInAction = [];
         items.forEach((item, index) => {
-            //apparel
-            if (item.productId.length > 7) {
-                if (storeID === 'Kotva' && item.storePrice !== item.price) { items[index].storePrice = item.price }
-                if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
-            //shoes
-            } else {
-                if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
-                if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes) }
+            if (item.count > 0) { //not apply on returns
+                //apparel
+                if (item.productId.length > 7) {
+                    if (storeID === 'Kotva' && item.storePrice !== item.price) { items[index].storePrice = item.price }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
+                //shoes
+                } else {
+                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes) }
+                }
             }
         });
     };
