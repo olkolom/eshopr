@@ -580,7 +580,7 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (['Outlet', 'Kotva'].includes(storeID)) {
+    if (['Kotva'].includes(storeID)) {
         let actionReducer = 0.7;
         let actionReducerShoes = 0.8;
         const notInAction = [];
