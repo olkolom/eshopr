@@ -580,7 +580,7 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (['Kotva'].includes(storeID)) {
+    if (['Kotva', 'Outlet'].includes(storeID)) {
         let actionReducer = 0.7;
         let actionReducerShoes = 0.8;
         const notInAction = [];
@@ -593,7 +593,7 @@ async function saveSale(items, storeID) {
                 //shoes
                 } else {
                     if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
-                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
                 }
             }
         });
