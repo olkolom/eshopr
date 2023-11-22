@@ -8,6 +8,7 @@
         <a href="sell?id=<%= storeID %>" class="button button1">Prodej v Beststore</a>
         <a href="sales?id=<%= storeID %>" class="button button1">Historie</a>
         <a href="/" class="button button1">Zpátky</a>
+        <a href="products?sort=1" class="button button1">Artikl</a>
         <%- include('partials/tab_products', {
             products: productList.filter(item => item.storeID==storeID&& item.action=='p'),
             name: productList.filter(item => item.storeID==storeID&& item.action=='p').length +' ks. připraveno pro prodej v Beststore',

@@ -111,7 +111,25 @@ app.get("/", (req, res)=> {
 
 app.get("/products", (req, res)=> {
   if (req.query.action === undefined && req.query.item === undefined)
-    { return res.render('products', req.session.data) }
+    { 
+      if (req.query.sort === "1") {
+        req.session.data.sort = !req.session.data.sort;
+        const { productList } = req.session.data;
+        const prodListShort = [];
+        const newProdList = [];
+        if (req.session.data.sort) {
+          productList.forEach((item, index) => prodListShort.push(item.productId + item.size + "#" + index));
+          prodListShort.sort();
+          prodListShort.forEach(i => newProdList.push(productList[i.split("#")[1]]));
+        } else {
+          productList.forEach((item, index) => prodListShort.push(item.orderId + "#" + index));
+          prodListShort.sort();
+          prodListShort.forEach(i => newProdList.unshift(productList[i.split("#")[1]]));
+        };
+        req.session.data.productList = newProdList;
+      }
+      return res.render('products', req.session.data) 
+    }
   if (req.query.action !== undefined) {
     let action = req.query.action.split('_')
     let type = action[0]
