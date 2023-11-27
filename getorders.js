@@ -582,7 +582,7 @@ async function saveSale(items, storeID) {
     //action prepare
     if (['Kotva', 'Outlet'].includes(storeID)) {
         let actionReducer = 0.7;
-        let actionReducerShoes = 0.8;
+        let actionReducerShoes = 0.7;
         const notInAction = [];
         items.forEach((item, index) => {
             if (item.count > 0) { //not apply on returns
@@ -593,7 +593,7 @@ async function saveSale(items, storeID) {
                 //shoes
                 } else {
                     if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes) }
-                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducer) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * actionReducerShoes) }
                 }
             }
         });
