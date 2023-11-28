@@ -320,6 +320,7 @@ async function getOrdersData(eshopUri) {
                             action,
                             storePrice,
                             index: productIndex,
+                            pic: productId.split(" ").join("-")
                         })
                         productIndex++
                         orderQuantity--
@@ -374,6 +375,7 @@ async function getOrdersData(eshopUri) {
                             sale: true,
                             ret: true,
                             index: productIndex,
+                            pic: item.productId.split(" ").join("-"),
                         })
                         productIndex++
                     }
