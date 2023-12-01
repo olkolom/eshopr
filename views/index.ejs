@@ -20,7 +20,7 @@
         cbTag: 'gl'}
     ) %>
     <%- include('partials/tab_orders', {
-            orders: ordersList.filter(order => order.delivery.slice(0,3) == 'Zás' && order.toSend),
+            orders: ordersList.filter(order => order.delivery.startsWith('Z') && order.toSend),
             name: 'Zásilkovna',
             cbTag: 'za'}
     ) %>

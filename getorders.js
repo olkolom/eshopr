@@ -550,7 +550,7 @@ async function saveReturn(data) {
 async function getReturns() {
     const returns = []
     try {
-        const query = await returnsCollection.find().limit(50).sort({date: -1}).toArray()
+        const query = await returnsCollection.find().limit(100).sort({date: -1}).toArray()
         for (const curReturn of query) {
             const fromOrder = await ordersCollection.findOne({number: curReturn.order})
             let invoice = ''
