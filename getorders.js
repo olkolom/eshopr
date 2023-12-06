@@ -583,7 +583,7 @@ async function saveSale(items, storeID) {
    
     //action prepare
     if (['Kotva', 'Outlet'].includes(storeID)) {
-        let actionReducer = 0.7;
+        let actionReducer = 0.5;
         let actionReducerShoes = 0.7;
         const notInAction = [];
         items.forEach((item, index) => {
