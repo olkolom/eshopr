@@ -592,7 +592,7 @@ async function saveSale(items, storeID) {
                     if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.5) }
                 //shoes
                 } else {
-                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.7) }
                     if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.7) }
                 }
             }
