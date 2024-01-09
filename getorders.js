@@ -582,7 +582,7 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (['Kotva', 'Outlet'].includes(storeID)) {
+    if (false) { // ['Kotva', 'Outlet'].includes(storeID)) {
         const notInAction = [];
         items.forEach((item, index) => {
             if (item.count > 0) { //not apply on returns
