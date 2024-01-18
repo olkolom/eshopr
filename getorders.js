@@ -588,7 +588,7 @@ async function saveSale(items, storeID) {
             if (item.count > 0) { //not apply on returns
                 //apparel
                 if (item.productId.length > 7) {
-                    if (storeID === 'Kotva' && item.storePrice !== item.price) { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
                     if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.5) }
                 //shoes
                 } else {
