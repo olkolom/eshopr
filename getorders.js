@@ -55,7 +55,7 @@ function legacyApi(orders) {
 //configurable orders read with ER api
 function getApiOrders (url, limit, date, after ) {
     return new Promise((resolve, reject) => {
-        let addToUrl = '&version=v2.0'
+        let addToUrl = '';
         if (limit) addToUrl = addToUrl + '&limit=' + limit
         let direction
         after ? direction =  '&after=' : direction =  '&before='
@@ -70,7 +70,10 @@ function getApiOrders (url, limit, date, after ) {
                 reject(new Error('Failed to load from API'))
             }
           })
-        .catch (err => reject(err) )
+        .catch (err => {
+            reject(err);
+            console.log(err.message);
+        })
     })
 }
 
@@ -82,44 +85,42 @@ async function getOrdersData(eshopUri) {
     const workStatus = ['c','d','n','g']
     try {
 	//add fresh and update new, paid and unpaid orders
-        console.log('Getting orders from DB')
+        console.log('Getting orders from DB');
         const ordersToUpdate = await ordersCollection.find(
             { vyrizeno : { $in: workStatus } }, 
             { sort: {'id_order': -1}, projection: { '_id': 0, 'id_order': 1, 'vyrizeno': 1}})
-            .toArray()
-        console.log('done')
-        const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}, projection: { '_id': 0, 'id_order': 1}})
-        const lastDbOrderId = lastDbOrder.id_order
-        let lastApiOrder, lastApiOrderId;
+            .toArray();
+
+        const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}, projection: { '_id': 0, 'id_order': 1}});
+        const lastDbOrderId = lastDbOrder.id_order;
+        console.log('done');
+
+        let lastApiOrderId = lastDbOrderId;
+        console.log('Getting orders from API');
+        let apiOrders = [];
         try {
-            lastApiOrder = await getApiOrders(eshopUri,1);
-            lastApiOrderId = lastApiOrder[0].id_order
+            apiOrders = await getApiOrders(eshopUri, 99);
+            lastApiOrderId = apiOrders[0].id_order;
         } catch {
             console.log('Problem with ESR API');
-            lastApiOrder = lastDbOrderId
-        }
-        let firstOrderToUpdate = lastDbOrder
-        if (ordersToUpdate.length > 0) { firstOrderToUpdate = ordersToUpdate[ordersToUpdate.length - 1]['id_order'] }
-        let ordersCount = lastApiOrderId - firstOrderToUpdate + 1
-        if (ordersCount > 99) ordersCount = 99 //TODO implement page read from api
+        };
+        console.log('done');
+
+        let firstOrderToUpdate = lastDbOrder;
+        if (ordersToUpdate.length > 0) { firstOrderToUpdate = ordersToUpdate[ordersToUpdate.length - 1].id_order };
+        let ordersCount = lastApiOrderId - firstOrderToUpdate + 1;
+        if (ordersCount > 99) { ordersCount = 99 }; //TODO implement page read from api
         let newOrdersCount = lastApiOrderId - lastDbOrderId
         if (newOrdersCount > 99) newOrdersCount = 99 //TODO implement page read from api
-        console.log('Getting orders from API');
-        let apiOrders;
-        try {
-            apiOrders = await getApiOrders(eshopUri, ordersCount)
-        } catch {
-            console.log('Problem with ESR API');
-            apiOrders = [];
-        }
-        console.log('done')
-        const freshApiOrders = apiOrders.slice(0, newOrdersCount)
+        
+        const freshApiOrders = apiOrders.slice(0, newOrdersCount);
         if (freshApiOrders.length > 0) {
-            let result = await ordersCollection.insertMany(freshApiOrders)
-            console.log(`${result.insertedCount} fresh orders inserted`)
-        }
-        let updatedOrders = 0
-        for (let i=0; i<ordersToUpdate.length; i++) {
+            let result = await ordersCollection.insertMany(freshApiOrders);
+            result ? console.log(`${result.insertedCount} fresh orders inserted`) : console.log(`0 fresh orders from ${newOrdersCount} inserted`);
+        };
+
+        let updatedOrders = 0;
+        for (let i = 0; i < ordersToUpdate.length; i++) {
             let orderIdToUpdate = ordersToUpdate[i]['id_order']
             let orderIndex = apiOrders.findIndex(e => e['id_order'] === orderIdToUpdate)
             if (orderIndex !== -1) {
@@ -130,7 +131,7 @@ async function getOrdersData(eshopUri) {
                     { 'id_order' : apiOrders[orderIndex]['id_order'] }, apiOrders[orderIndex])
                 if (result.modifiedCount === 1) updatedOrders++
             }
-        }
+        };
         console.log(`${updatedOrders} orders updated from ${ordersToUpdate.length}`)
         
         let loopCounter = 1
