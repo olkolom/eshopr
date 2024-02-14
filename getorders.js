@@ -666,12 +666,12 @@ async function getOrdersByItem (item) {
     let orders = []
     try {
         let itemID, variant
-        if (item.length == 13 && !item.includes(' ')) {
+        if (item.length == 13 && !item.includes('*')) {
             const ean = parseInt(item)
             variant = await inventoryCollection.findOne({ean})
         } else {
-            const [model, size]= item.split(' ')
-            variant = await inventoryCollection.findOne({ model, size })
+            const [model, size]= item.split('*')
+            variant = await inventoryCollection.findOne({ model: model, size })
         }
         if (variant) {
             variant.esVarId ? itemID= variant.esVarId : itemID= variant["_id"]
@@ -730,14 +730,12 @@ async function getOrdersByItem (item) {
 async function getItem (item) {
     let searchedItem = null
     try {
-        if (item.length == 13) {
+        if (item.length === 13 && !item.includes('*')) {
             const ean = parseInt(item, 10)
             searchedItem = await inventoryCollection.findOne({ ean: ean })
         } else {
-            const params = item.split('-')
-            const model = params[0].toString()
-            const size = params[1].toString()
-            searchedItem = await inventoryCollection.findOne({ model: model, size: size })
+            const [model, size] = item.split('*');
+            searchedItem = await inventoryCollection.findOne({ model, size });
         }
     } catch(err) {
         console.log('Get item data error:' + err.message)

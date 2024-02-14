@@ -186,9 +186,13 @@ app.get("/sales", (req, res)=> {
 })
 
 app.get("/return", (req, res)=> {
-  if (req.query.item !== undefined ) { dataSource.getOrdersByItem(req.query.item).then( orders => res.render('ret_input',orders))}
-  else if (req.query.orderid === undefined) { return res.render('ret_input', {orders:[]}) }
-  else dataSource.getOrder(req.query.orderid).then(orderData => res.render('ret_form', orderData))
+  if (req.query.item !== undefined ) {
+    dataSource.getOrdersByItem(req.query.item).then( orders => res.render('ret_input',orders))
+  } else { 
+    if (req.query.orderid === undefined) { 
+      return res.render('ret_input', {orders:[]})
+    } else dataSource.getOrder(req.query.orderid).then(orderData => res.render('ret_form', orderData))
+  }
 })
 
 app.get("/retsave", (req, res)=> {
