@@ -1,4 +1,5 @@
-const { MongoClient } = require('mongodb')
+const { MongoClient, ObjectId } = require('mongodb')
+const { uncompressibleCommands } = require('mongodb/lib/core/wireprotocol/compression')
 
 //implementation of http get
 function getRequest (url) {
@@ -662,6 +663,26 @@ async function getSales(storeID, date) {
     return {salesData : sales, daySales: daySalesTotal, date, id: storeID }
 } 
 
+async function getEan(id) {
+    const salesData = [];
+    try {
+        const sale = await salesCollection.findOne({ _id: ObjectId(id) });
+        if (sale) { 
+            const newItems = [];
+            const { items } = sale;
+            for (i = 0; i < items.length; i++) {
+                const { productId, size } = items[i];
+                const variant = await inventoryCollection.findOne({ prodId: productId, size });
+                newItems.push({...items[i], ean: variant ? variant.ean : 0 });
+            };
+            salesData.push({ items: newItems }) 
+        };
+    } catch(err) {
+        console.log('Get sales data error:' + err.message)
+    };
+    return { salesData }
+}; 
+
 async function getOrdersByItem (item) {
     let orders = []
     try {
@@ -759,7 +780,7 @@ function init (mongoUri) {
         })
     }
     return {
-        getOrdersData, saveSale, saveReturn, getReturns, getSales, getOrdersByItem, getOrder, getItem,
+        getOrdersData, saveSale, saveReturn, getReturns, getSales, getOrdersByItem, getOrder, getItem, getEan,
     }
 }
 

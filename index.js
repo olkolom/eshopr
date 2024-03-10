@@ -185,6 +185,11 @@ app.get("/sales", (req, res)=> {
   dataSource.getSales(req.query.id, date).then(salesData => res.render('sales', salesData))
 })
 
+app.get("/ean", (req, res)=> {
+  if (req.query.id === undefined) { return res.redirect('/') };
+  dataSource.getEan(req.query.id).then(salesData => res.render('ean', salesData))
+})
+
 app.get("/return", (req, res)=> {
   if (req.query.item !== undefined ) {
     dataSource.getOrdersByItem(req.query.item).then( orders => res.render('ret_input',orders))
