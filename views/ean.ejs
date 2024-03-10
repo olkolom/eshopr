@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Objednávky Primigistore.cz</title>
+    <title>EAN seznam</title>
     <link rel="stylesheet" href="/public/default.css">
     <style>
     table {
@@ -13,16 +13,10 @@
       text-align: left;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/barcodes/JsBarcode.ean-upc.min.js"></script>
 </head>
 <body>
-    <h2>Prodeje za <%= date %> celkem <%= daySales %> Kč</h2>
-    <form>
-        <input type="date" value="<%= date %>" name="date">
-        <button name="id" value="<%= id %>" class="button button1">Prodeje</button>
-        <a href="/products" class="button button1">Zpátky</a>
-    </form>
     <% salesData.forEach(sale => { %>
-        <h4><a href="ean?id=<%= sale._id %>">Celkem <%= sale.totalSum %> Kč</a></h4>
         <table>
             <thead>
                 <tr>
@@ -31,22 +25,33 @@
                     <th>Cena</th>
                     <th>Ks</th>
                     <th>Celkem</th>
-                    <th>Objednávka</th>
+                    <th>EAN</th>
                 </tr>
             </thead>
             <tbody>
-                <% sale.items.forEach(item => { %>
+                <% sale.items.forEach((item, index) => { %>
                     <tr>
                         <td><%= item.productId %></td>
                         <td><%= item.size %></td>
                         <td><%= item.price %></td>
                         <td><%= item.count %></td>
                         <td><%= item.total %></td>
-                        <td><a href="order?orderid=<%= item.orderId %>"><%= item.orderId %></a></td>
+                        <td><svg class=<%= "barcode" + index %>
+                            jsbarcode-format="ean13"
+                            jsbarcode-value="<%= item.ean %>"
+                            jsbarcode-textmargin="0"
+                            jsbarcode-height="30"
+                            jsbarcode-width="2">
+                          </svg>
+                            <script>
+                                JsBarcode(".barcode" + <%= index %>).init();
+                            </script>
+                        </td>
                     </tr>
                 <% }) %>
             </tbody>
         </table>
     <% }) %>
+    
 </body>
 </html>
