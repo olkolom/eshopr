@@ -583,18 +583,18 @@ async function saveSale(items, storeID) {
     const fs= require('fs')
    
     //action prepare
-    if (['Kotva'].includes(storeID)) {
+    if (['Kotva', 'Outlet'].includes(storeID)) {
         const notInAction = [];
         items.forEach((item, index) => {
             if (item.count > 0) { //not apply on returns
                 //apparel
                 if (item.productId.length > 7) {
                     if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
-                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.5) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
                 //shoes
                 } else {
                     if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
-                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.7) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
                 }
             }
         });
