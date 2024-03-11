@@ -1,5 +1,4 @@
 const { MongoClient, ObjectId } = require('mongodb')
-const { uncompressibleCommands } = require('mongodb/lib/core/wireprotocol/compression')
 
 //implementation of http get
 function getRequest (url) {
@@ -587,7 +586,8 @@ async function saveSale(items, storeID) {
     if (['Kotva', 'Outlet'].includes(storeID)) {
         const notInAction = [];
         items.forEach((item, index) => {
-            if (item.count > 0) { //not apply on returns
+            const isNewCollection = (item.productId.length === 7 && item.productId.startsWith('5')) || (item.productId.length === 8 && item.productId.startsWith('55'));
+            if (item.count > 0 && !isNewCollection) { //not apply on returns
                 //apparel
                 if (item.productId.length > 7) {
                     if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
