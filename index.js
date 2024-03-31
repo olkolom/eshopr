@@ -162,27 +162,20 @@ app.get("/order", (req, res)=> {
 })
 
 app.get("/sell", (req, res)=> {
-  if (req.query.id === undefined) { return res.redirect('/') }
-  let storeID = req.query.id
-  let items =[]
-  req.session.data.productList.forEach( (item, index) => {
-    if (item.action == 'p' && item.storeID == storeID ) {
-      items.push(item)
-      req.session.data.productList[index].action = 'u'
-    }
-  })
-  if (items.length !== 0) dataSource.saveSale(items, storeID)
-  res.redirect('/products')
-})
+  if (req.query.id === undefined) { return res.redirect('/') };
+  const storeID = req.query.id;
+  const items = req.session.data.productList.filter( item => item.action == 'p' && item.storeID == storeID );
+  if (items.length !== 0) { 
+    dataSource
+    .saveSale(items, storeID)
+    .then(saleSaved => saleSaved ? res.redirect(`/sales?id=${storeID}`) : res.redirect('/products'));
+  } else res.redirect('/products');
+});
 
 app.get("/sales", (req, res)=> {
-  if (req.query.id === undefined) { return res.redirect('/') }
-  let date = req.query.date
-  if (date === undefined) {
-    date = new Date()
-    date = date.toISOString().slice(0,10)
-  }
-  dataSource.getSales(req.query.id, date).then(salesData => res.render('sales', salesData))
+  if (req.query.id === undefined) { return res.redirect('/') };
+  const date = req.query.date ? req.query.date : new Date().toISOString().slice(0,10);
+  dataSource.getSales(req.query.id, date).then(salesData => res.render('sales', salesData));
 })
 
 app.get("/ean", (req, res)=> {

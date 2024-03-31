@@ -22,7 +22,11 @@
         <a href="/products" class="button button1">Zpátky</a>
     </form>
     <% salesData.forEach(sale => { %>
-        <h4><a href="ean?id=<%= sale._id %>">Celkem <%= sale.totalSum %> Kč</a></h4>
+        <h4><a href="ean?id=<%= sale._id %>">Celkem <%= sale.totalSum %> Kč </a>
+        <% if (sale.voucher) { %>
+            Voucher <%= sale.voucher %> Kč
+        <% } %> 
+        </h4>
         <table>
             <thead>
                 <tr>

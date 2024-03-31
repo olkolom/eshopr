@@ -1,4 +1,5 @@
 const { MongoClient, ObjectId } = require('mongodb')
+const { re } = require('./node_modules.nosync/semver/semver')
 
 //implementation of http get
 function getRequest (url) {
@@ -580,30 +581,10 @@ async function getReturns() {
 } 
 
 async function saveSale(items, storeID) {
-    const fs= require('fs')
-   
-    //action prepare
-    if (['Kotva', 'Outlet'].includes(storeID)) {
-        const notInAction = [];
-        items.forEach((item, index) => {
-            const isNewCollection = (item.productId.length === 7 && item.productId.startsWith('5')) || (item.productId.length === 8 && item.productId.startsWith('55'));
-            if (item.count > 0 && !isNewCollection) { //not apply on returns
-                //apparel
-                if (item.productId.length > 7) {
-                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
-                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
-                //shoes
-                } else {
-                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
-                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
-                }
-            }
-        });
-    };
     
-    let date = new Date().toISOString().slice(0,10)
-    let newSale
-    try {
+    async function saveSubSale (items, voucher = 0) {
+        let saleSaved = false;
+        const date = new Date().toISOString().slice(0,10);
         let totalSum = 0
         let totalCount = 0
         let totalPriceDif = 0
@@ -611,21 +592,27 @@ async function saveSale(items, storeID) {
         let returnsIndexes = []
         items.forEach((item, index) => {
             if (item.count < 0) returnsIndexes.push(index)
+            const realStorePrice = voucher === 0 ? item.storePrice : item.storePrice - voucher;
             itemsList.push({
                 orderId: item.orderNumber,
                 productId: item.productId,
                 size: item.size,
-                price: item.storePrice,
+                price: realStorePrice,
                 count: item.count,
-                total: item.count*Math.abs(item.storePrice),
+                total: item.count * Math.abs(realStorePrice),
                 orderPrice: item.price,
             })
-            totalSum = totalSum + item.count*Math.abs(item.storePrice)
-            totalCount = totalCount + item.count
-            totalPriceDif  = totalPriceDif + item.price - item.storePrice
+            totalSum += item.count * Math.abs(realStorePrice);
+            totalCount += item.count;
+            totalPriceDif += item.price - realStorePrice;
         })
-        newSale = { date, totalSum, totalCount, totalPriceDif, storeID, items: itemsList }
-        await salesCollection.insertOne(newSale)
+        const saleAdd = voucher === 0 ? {} : {voucher};
+        const newSale = { date, totalSum, totalCount, totalPriceDif, storeID, items: itemsList, ...saleAdd };
+        const result = await salesCollection.insertOne(newSale);
+        if (result) { 
+            saleSaved = true;
+            items.forEach(item => item.action = "u");
+        };
 
         //reduce items count in variants
         for (let i=0; i<newSale.items.length; i++) {
@@ -645,11 +632,73 @@ async function saveSale(items, storeID) {
                 { 
                     $set: { "items.$.saved" : true, "items.$.saveDate": date }})
         }
+        
+       return saleSaved;
+    };
+
+    /*
+    //action prepare
+    if (['Kotva', 'Outlet'].includes(storeID)) {
+        const notInAction = [];
+        items.forEach((item, index) => {
+            const isNewCollection = (item.productId.length === 7 && item.productId.startsWith('5')) || (item.productId.length === 8 && item.productId.startsWith('55'));
+            if (item.count > 0 && !isNewCollection) { //not apply on returns
+                //apparel
+                if (item.productId.length > 7) {
+                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                //shoes
+                } else {
+                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                }
+            }
+        });
+    };
+    */
+    
+    let action = false;
+    let actionItem;
+    let itemsForSale = items;
+    let voucher = 0;
+    
+    //voucher action
+    if (storeID === "Kotva") {
+        if (items.length < 2) { return false };
+        let totalSum = 0;
+        let smallestValue = 0;
+        let smallestIndex = -1;
+        let totalCount = 0;
+        items.forEach((item, index) => {
+            if (item.storePrice > 0 && (item.storePrice < smallestValue || smallestValue === 0)) { 
+                smallestValue = item.storePrice;
+                smallestIndex = index;
+            };
+            totalSum += item.storePrice;
+            totalCount += item.count;
+        })
+        if (smallestIndex === -1 || (totalCount !==0 && (totalSum - smallestValue) < 500)) { return false };
+        voucher = Math.round((totalSum - smallestValue) * 0.2);
+        if (totalCount > 0) {
+            itemsForSale = [];
+            action = true;
+            actionItem = items[smallestIndex];
+            items.forEach((item, index) => { if (index !== smallestIndex) itemsForSale.push(item) });
+        };
+    }
+
+    let saleSaved = false;
+    try {
+        saleSaved = await saveSubSale(itemsForSale);
+        if (saleSaved && action && actionItem) {
+            const result = await saveSubSale([actionItem], voucher);
+            //if (result) { actionItem.action = "u" };
+        };
     } catch(err) {
         console.log('Save sale data error:' + err.message)
     }
-    return newSale
-} 
+    return saleSaved;
+};
 
 async function getSales(storeID, date) {
     let sales = []
