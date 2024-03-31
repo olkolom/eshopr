@@ -1,5 +1,4 @@
 const { MongoClient, ObjectId } = require('mongodb')
-const { re } = require('./node_modules.nosync/semver/semver')
 
 //implementation of http get
 function getRequest (url) {
@@ -632,7 +631,7 @@ async function saveSale(items, storeID) {
                 { 
                     $set: { "items.$.saved" : true, "items.$.saveDate": date }})
         }
-        
+
        return saleSaved;
     };
 
