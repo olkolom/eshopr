@@ -548,7 +548,7 @@ async function saveReturn(data) {
     return newReturn
 } 
 
-async function getReturns() {
+async function getReturns(command) {
     const returns = []
     try {
         const query = await returnsCollection.find().limit(100).sort({date: -1}).toArray()
@@ -576,6 +576,16 @@ async function getReturns() {
     } catch(err) {
         console.log('Get returns data error:' + err.message)
     }
+    if (command) {
+        const woPays = returns.filter(item => item.vs && item.datePay === '');
+        if (command === "savePays") {
+            const date = new Date().toISOString().slice(0,10);
+            for (const item of woPays) {
+                await returnsCollection.updateOne({_id: ObjectId( item._id )}, { $set: { datePay: date }})
+            };
+        }
+        return { returns: woPays };
+    };
     return {returns}
 } 
 

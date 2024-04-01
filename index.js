@@ -196,7 +196,7 @@ app.get("/return", (req, res)=> {
 app.get("/retsave", (req, res)=> {
   if (req.query.order === undefined ) {return res.redirect('/return')}
   if (req.query.item === undefined ) {return res.send('Žadné zboží')}
-  if (req.query.acc === "" ) {return res.send('Není číslo účtu')}
+  if (req.query.acc === "" && req.query.comment === "") {return res.send('Není číslo účtu')}
   dataSource.getOrder(req.query.order)
   .then(orderData => {
     let items = []
@@ -209,6 +209,7 @@ app.get("/retsave", (req, res)=> {
       delivery: req.query.delivery,
       payment: req.query.payment,
       items: items,
+      comment: req.query.comment,
     }
   })
   .then(data => dataSource.saveReturn(data))
@@ -216,8 +217,9 @@ app.get("/retsave", (req, res)=> {
 })
 
 app.get("/returns", (req, res)=> {
+  const isAdmin = req.session.user === "alexej@solomio.cz" ? true : false;
   if (req.query.orderid !== undefined ) {}
-  else dataSource.getReturns().then(data => res.render('returns', data))
+  else dataSource.getReturns().then(data => res.render('returns', {...data, isAdmin}))
 })
 
 app.get("/ppl", (req, res, next)=> {
@@ -241,6 +243,12 @@ app.get("/ppl", (req, res, next)=> {
     })
   } else res.redirect("/")
 })
+
+app.get("/abo", (req, res, next)=> {
+  if (req.session.user !== "alexej@solomio.cz") return res.redirect("/");
+  const command = req.query.save === "true" ? "savePays" : "getPays";
+  dataSource.getReturns(command).then(data => res.render('returns', {...data, isAdmin: true}))
+});
 
 app.listen(config.port, () => {
   console.log(`App running at http://localhost:${config.port}`)

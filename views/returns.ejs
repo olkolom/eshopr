@@ -10,7 +10,12 @@
     <input type="text" id="order" name="orderid">
     <input type="submit" value="Hledat">
 </form>
-<p><a href="/return" class="button button1">Zpátky</a></p>
+<p><a href="/return" class="button button1">Zpátky</a>
+<% if (isAdmin) { %>
+    <a href="/abo" class="button button1">ABO</a>
+    <a href="/abo?save=true" class="button button1">Uhrazeno</a>
+<% } %>
+</p>
 <table>
     <tr>
         <th>Datum</th>
@@ -22,6 +27,7 @@
         <th>Účet</th>
         <th>Banka</th>
         <th>VS</th>
+        <th>Pozn</th>
     </tr>
     <% returns.forEach( item => { %>
         <tr>
@@ -34,6 +40,7 @@
             <td><%= item.account%></td>
             <td><%= item.bank%></td>
             <td><%= item.vs%></td>
+            <td><%= item.comment%></td>
         </tr>
     <% }) %>
 </table>
