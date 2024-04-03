@@ -672,7 +672,7 @@ async function saveSale(items, storeID) {
     let voucher = 0;
     
     //voucher action
-    if (storeID === "Kotva") {
+    if (false) { //storeID === "Kotva") {
         if (items.length < 2) { return false };
         let totalSum = 0;
         let smallestValue = 0;
