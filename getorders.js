@@ -826,17 +826,15 @@ var ordersCollection, inventoryCollection, salesCollection, returnsCollection, g
 
 function init (mongoUri) {
     const mongoClient = new MongoClient(mongoUri)
-    if (mongoClient.isConnected() === false) {
-        mongoClient.connect().then(() => {
-            console.log('Connected to DB')
-            const db = mongoClient.db('pmg')
-            ordersCollection = db.collection('orders')
-            inventoryCollection = db.collection('variants')
-            salesCollection = db.collection('sales')
-            returnsCollection = db.collection('returns')
-            glsPoints = mongoClient.db('gls').collection('points');
-        })
-    }
+    mongoClient.connect().then(() => {
+        console.log('Connected to DB')
+        const db = mongoClient.db('pmg')
+        ordersCollection = db.collection('orders')
+        inventoryCollection = db.collection('variants')
+        salesCollection = db.collection('sales')
+        returnsCollection = db.collection('returns')
+        glsPoints = mongoClient.db('gls').collection('points');
+    })
     return {
         getOrdersData, saveSale, saveReturn, getReturns, getSales, getOrdersByItem, getOrder, getItem, getEan,
     }
