@@ -825,7 +825,7 @@ async function getItem (item) {
 var ordersCollection, inventoryCollection, salesCollection, returnsCollection, glsPoints
 
 function init (mongoUri) {
-    const mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true })
+    const mongoClient = new MongoClient(mongoUri)
     if (mongoClient.isConnected() === false) {
         mongoClient.connect().then(() => {
             console.log('Connected to DB')
