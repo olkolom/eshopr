@@ -581,7 +581,7 @@ async function getReturns(command) {
         if (command === "savePays") {
             const date = new Date().toISOString().slice(0,10);
             for (const item of woPays) {
-                await returnsCollection.updateOne({_id: ObjectId( item._id )}, { $set: { datePay: date }})
+                await returnsCollection.updateOne({_id: new ObjectId( item._id )}, { $set: { datePay: date }})
             };
         }
         return { returns: woPays };
@@ -724,7 +724,7 @@ async function getSales(storeID, date) {
 async function getEan(id) {
     const salesData = [];
     try {
-        const sale = await salesCollection.findOne({ _id: ObjectId(id) });
+        const sale = await salesCollection.findOne({ _id: new ObjectId(id) });
         if (sale) { 
             const newItems = [];
             const { items } = sale;
