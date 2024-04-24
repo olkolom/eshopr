@@ -645,26 +645,22 @@ async function saveSale(items, storeID) {
        return saleSaved;
     };
 
-    /*
     //action prepare
-    if (['Kotva', 'Outlet'].includes(storeID)) {
-        const notInAction = [];
+    if (['Outlet'].includes(storeID)) {
         items.forEach((item, index) => {
-            const isNewCollection = (item.productId.length === 7 && item.productId.startsWith('5')) || (item.productId.length === 8 && item.productId.startsWith('55'));
-            if (item.count > 0 && !isNewCollection) { //not apply on returns
+            if (item.count > 0 && item.productType !== "Sandály") { //not apply on returns
                 //apparel
                 if (item.productId.length > 7) {
-                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
-                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 1) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 1) }
                 //shoes
                 } else {
-                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
-                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 1) }
+                    if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.7) }
                 }
             }
         });
     };
-    */
     
     let action = false;
     let actionItem;
