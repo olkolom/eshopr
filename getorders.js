@@ -646,7 +646,7 @@ async function saveSale(items, storeID) {
     };
 
     //action prepare
-    if (['Outlet', 'Kotva'].includes(storeID)) {
+    if ([].includes(storeID)) {
         items.forEach((item, index) => {
             if (item.count > 0 && item.productType !== "Sandály") { //not apply on returns
                 //apparel
