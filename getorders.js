@@ -42,7 +42,7 @@ function legacyApi(orders) {
             orders[ordersCounter] = { ...order, "vyrizeno": oldState}
         } else {
             noErrors = false
-            console.log(`Order ${order["id_order"]} has unknown state ${newState}`)
+            console.log(` Order ${order["id_order"]} has unknown state ${newState}`)
         }
         ordersCounter--
     }
@@ -64,7 +64,7 @@ function getApiOrders (url, limit, date, after ) {
         .then(data => {
             const dataObj = JSON.parse(data)
             if (dataObj.success) {
-                console.log(`Loaded from API ${dataObj.params.orderList.length} orders`)
+                console.log(` Loaded from API ${dataObj.params.orderList.length} orders`)
                 resolve (legacyApi(dataObj.params.orderList))
             } else {
                 reject(new Error('Failed to load from API'))
@@ -85,7 +85,7 @@ async function getOrdersData(eshopUri) {
     const workStatus = ['c','d','n','g']
     try {
 	//add fresh and update new, paid and unpaid orders
-        console.log('Getting orders from DB');
+        console.log(' Getting orders from DB');
         const ordersToUpdate = await ordersCollection.find(
             { vyrizeno : { $in: workStatus } }, 
             { sort: {'id_order': -1}, projection: { '_id': 0, 'id_order': 1, 'vyrizeno': 1}})
@@ -93,10 +93,10 @@ async function getOrdersData(eshopUri) {
 
         const lastDbOrder = await ordersCollection.findOne({}, {sort: {id_order: -1}, projection: { '_id': 0, 'id_order': 1}});
         const lastDbOrderId = lastDbOrder.id_order;
-        console.log('done');
+        console.log(' done');
 
         let lastApiOrderId = lastDbOrderId;
-        console.log('Getting orders from API');
+        console.log(' Getting orders from API');
         let apiOrders = [];
         try {
             apiOrders = await getApiOrders(eshopUri, 99);
@@ -104,7 +104,7 @@ async function getOrdersData(eshopUri) {
         } catch {
             console.log('Problem with ESR API');
         };
-        console.log('done');
+        console.log(' done');
 
         let firstOrderToUpdate = lastDbOrder;
         if (ordersToUpdate.length > 0) { firstOrderToUpdate = ordersToUpdate[ordersToUpdate.length - 1].id_order };
@@ -116,7 +116,7 @@ async function getOrdersData(eshopUri) {
         const freshApiOrders = apiOrders.slice(0, newOrdersCount);
         if (freshApiOrders.length > 0) {
             let result = await ordersCollection.insertMany(freshApiOrders);
-            result ? console.log(`${result.insertedCount} fresh orders inserted`) : console.log(`0 fresh orders from ${newOrdersCount} inserted`);
+            result ? console.log(` ${result.insertedCount} fresh orders inserted`) : console.log(` 0 fresh orders from ${newOrdersCount} inserted`);
         };
 
         let updatedOrders = 0;
@@ -132,7 +132,7 @@ async function getOrdersData(eshopUri) {
                 if (result.modifiedCount === 1) updatedOrders++
             }
         };
-        console.log(`${updatedOrders} orders updated from ${ordersToUpdate.length}`)
+        console.log(` ${updatedOrders} orders updated from ${ordersToUpdate.length}`)
         
         let loopCounter = 1
         let lastLoop = false
@@ -386,7 +386,7 @@ async function getOrdersData(eshopUri) {
             //orders status return
             let returnedOrders = 0
             let approvedOrders = 0
-            console.log(`Orders to return: ${ordersToReturn.length}, orders to view: ${ordersList.length}`)
+            console.log(` Orders to return: ${ordersToReturn.length}, orders to view: ${ordersList.length}`)
             for (let i=0; i<ordersToReturn.length; i++) {
                 const { id_order, newStatus, prevStatus } = ordersToReturn[i]
                 const orderListItem = ordersList.find(e => e.id == id_order)
@@ -407,7 +407,7 @@ async function getOrdersData(eshopUri) {
                     }
                 }
             }
-            console.log(`${returnedOrders} orders status returned and ${approvedOrders} don't from ${ordersToReturn.length}`)
+            console.log(` ${returnedOrders} orders status returned and ${approvedOrders} don't from ${ordersToReturn.length}`)
             if (returnedOrders === 0 && approvedOrders === 0 || loopCounter > 2) { lastLoop = true }
             if (loopCounter === 2) { ordersToReturn = [] }
             if (!lastLoop) {

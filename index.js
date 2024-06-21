@@ -93,7 +93,7 @@ app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/auth'
 
 var dataProcessing = false
 app.get('/refresh', async (req, res, next)=> {
-  console.log('Processing data...')
+  console.log(req.session.user, 'Processing data...')
   if (dataProcessing === true) {return next()}
   dataProcessing = true
   req.session.data = await dataSource.getOrdersData(config.eshopUri)
