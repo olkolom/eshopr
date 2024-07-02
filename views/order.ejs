@@ -55,7 +55,7 @@
     </style>
 </head>
 <body>
-    <h4>Objednávka <%= id %></h4>
+    <h4 style="font-size: 1.5em;">Objednávka <%= id %></h4>
     <table>
         <thead>
             <tr>
@@ -72,20 +72,20 @@
         <tbody>
             <% items.forEach((item, index) => { %>
                 <tr>
-                    <td><%= index+1 %></td>
+                    <td style="font-size: 1.5em;"><%= index+1 %></td>
                     <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId.replace(' ', '-') %>-1.jpg" alt="" border=3 width=100></img></td>
-                    <td><a href="/return?item=<%= item.productId %>*<%= item.size %>"><%= item.productId %></a></td>
-                    <td><%= item.size %></td>
-                    <td><%= item.price + ' Kč' %></td>
-                    <td><%= item.count %></td>
-                    <td><%= item.storeID %></td>
+                    <td><a style="font-size: 2em;" href="/return?item=<%= item.productId %>*<%= item.size %>"><%= item.productId %></a></td>
+                    <td style="font-size: 2em;"><%= item.size %></td>
+                    <td style="font-size: 1.5em;"><%= item.price + ' Kč' %></td>
+                    <td style="font-size: 1.5em;"><%= item.count %></td>
+                    <td style="font-size: 1.5em;"><%= item.storeID %></td>
                     <td><%= item.date %></td>
                 </tr>
             <% }) %>
         </tbody>
     </table>
-    <p>Doprava: <%= delivery %></p>
-    <p>Platba: <%= payment %></p>
+    <p style="font-size: 1.5em;">Doprava: <%= delivery %></p>
+    <p style="font-size: 1.5em;">Platba: <%= payment %></p>
     <p><a class="button button1" href="/">Zpátky</a></p>
 </body>
 </html>
