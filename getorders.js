@@ -656,7 +656,7 @@ async function saveSale(items, storeID) {
                     //if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 1) };
                 //shoes
                 } else {
-                    items[index].storePrice = Math.round(items[index].storePrice * 0.8);
+                    if (["3", "5"].includes(item.productId[0])) { items[index].storePrice = Math.round(items[index].storePrice * 0.8) };
                     //if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 1) };
                     //if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.7) };
                 }
