@@ -246,6 +246,7 @@ async function getOrdersData(eshopUri) {
                         if (size[1] == "+") {size = size[0]}
                     }
                     if (typeof(size) == "number" ) {size = size.toString()}
+                    if (productId.startsWith('56') && ["3","5"].includes(size)) { size += 'A' };
                     //if quantity is >1 push item 'quantity' times
                     let orderQuantity = product.count
                     while (orderQuantity>0) {
