@@ -240,6 +240,7 @@ async function getOrdersData(eshopUri) {
                     let productId = product.product_number
                     let sizeParts = product.variant_description.split(' ')
                     let size = sizeParts[2]
+                    let isSolomio = false;
                     if (sizeParts[3] !== undefined) { size = size + ' ' + sizeParts[3]}
                     if (sizeParts[2] === "zima") { 
                         size = sizeParts[3]
@@ -301,6 +302,7 @@ async function getOrdersData(eshopUri) {
                                             founded=true
                                             storeID=stock.inventory[i].id
                                             storePrice=stock.inventory[i].price
+                                            if (stock.inventory[i].isSolomio) { isSolomio = true };
                                         } else { itemQuantity = itemQuantity - stock.inventory[i].quantity}
                                     }
                                     i++
@@ -323,7 +325,8 @@ async function getOrdersData(eshopUri) {
                             action,
                             storePrice,
                             index: productIndex,
-                            pic: productId.split(" ").join("-")
+                            pic: productId.split(" ").join("-"),
+                            isSolomio,
                         })
                         productIndex++
                         orderQuantity--
@@ -593,7 +596,8 @@ async function getReturns(command) {
 
 async function saveSale(items, storeID) {
     
-    async function saveSubSale (items, voucher = 0) {
+    async function saveSubSale (items, voucher = 0, toStore) {
+
         let saleSaved = false;
         const date = new Date().toISOString().slice(0,10);
         let totalSum = 0
@@ -619,6 +623,10 @@ async function saveSale(items, storeID) {
         })
         const saleAdd = voucher === 0 ? {} : {voucher};
         const newSale = { date, totalSum, totalCount, totalPriceDif, storeID, items: itemsList, ...saleAdd };
+        if (["Kotva", "Outlet", "Harfa"].includes(toStore) && toStore !== storeID) { 
+            newSale.storeID = toStore;
+            newSale.from = storeID;
+        };
         const result = await salesCollection.insertOne(newSale);
         if (result) { 
             saleSaved = true;
@@ -668,7 +676,8 @@ async function saveSale(items, storeID) {
     
     let action = false;
     let actionItem;
-    let itemsForSale = items;
+    let itemsForSale = items.filter((e) => !e.isSolomio);
+    let itemsForMove = items.filter((e) => e.isSolomio);
     let voucher = 0;
     
     //voucher action
@@ -703,6 +712,9 @@ async function saveSale(items, storeID) {
             const result = await saveSubSale([actionItem], voucher);
             //if (result) { actionItem.action = "u" };
         };
+        if (saleSaved && itemsForMove.length > 0) {
+            const result = await saveSubSale(itemsForMove, 0, "Harfa" );
+        };
     } catch(err) {
         console.log('Save sale data error:' + err.message)
     }
@@ -710,11 +722,13 @@ async function saveSale(items, storeID) {
 };
 
 async function getSales(storeID, date) {
-    let sales = []
-    let daySalesTotal = 0
+    let sales = [];
+    let daySalesTotal = 0;
     try {
         sales = await salesCollection.find({ date: date, storeID: storeID}).toArray()
         if (sales.length > 0) sales.forEach(sale => {daySalesTotal = daySalesTotal + sale.totalSum})
+        const movements = await salesCollection.find({ date: date, from: storeID}).toArray();
+        if (movements.length > 0) { sales = sales.concat(movements)};
     } catch(err) {
         console.log('Get sales data error:' + err.message)
     }

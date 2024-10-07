@@ -19,9 +19,11 @@
         <% products.forEach((item, index) => { %>
             <% if(item.ret) { %>
             <tr style="color: red">
+            <% } else { if (item.isSolomio && item.storeID !== "Harfa") {%>
+            <tr style="color: blue; font-weight: bold">
             <% } else { %>
             <tr>
-            <% } %>
+            <% }} %>
                 <td>
                     <% if(action === 'p_'){ %>
                         <% if(item.sale && item.action !== 'u'){ %>
