@@ -307,7 +307,9 @@ async function getOrdersData(eshopUri) {
                                     }
                                     i++
                                 }
-                            } else {storeID = "Nové"}
+                            } else {
+                                storeID = "Nové";
+                            }
                         }
                         
                         productList.unshift({
@@ -463,6 +465,8 @@ async function getOrder(orderID) {
             let size = product.size
             let soldDate = ""
             if (typeof(size) == "number" ) {size = size.toString()}
+            if (product.productId.startsWith('56') && ["4","5"].includes(product.size)) { product.size += 'A' };
+            if (product.productId.startsWith('56') && product.size[2] === '/') { product.size = product.size.slice(0,3) };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size: product.size,
@@ -478,7 +482,9 @@ async function getOrder(orderID) {
                     }
                     i++
                 }
-            } else {storeID = "Nové"}
+            } else {
+                storeID = "Nové";
+            }
             let query = {
                     items: {$elemMatch: { 
                         orderId: product.orderNumber, 
@@ -707,7 +713,7 @@ async function saveSale(items, storeID) {
 
     let saleSaved = false;
     try {
-        saleSaved = await saveSubSale(itemsForSale);
+        saleSaved = itemsForSale.length === 0 ? true : await saveSubSale(itemsForSale);
         if (saleSaved && action && actionItem) {
             const result = await saveSubSale([actionItem], voucher);
             //if (result) { actionItem.action = "u" };
