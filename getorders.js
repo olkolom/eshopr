@@ -266,7 +266,7 @@ async function getOrdersData(eshopUri) {
                             backwCounter--
                         }
                         //also some code  at if code below
-                        let storeID = "Neni"
+                        let storeID = "Nejsou"
                         let storePrice = 0
                         let action = 'n'
                         let saleDate = ""
@@ -347,7 +347,7 @@ async function getOrdersData(eshopUri) {
                     toSend,
                     sender: '',
                     pplData,
-                    multiStore: false,
+                    missingItem: false,
                     skOrder,
                     allItemSold: true,
                 })
@@ -355,21 +355,16 @@ async function getOrdersData(eshopUri) {
             
             //define sender and order status
             productList.forEach(item => {
-                const orderIndex = ordersList.findIndex(order => order.number == item.orderNumber)
-                let sender = item.storeID
-                if (!ordersList[orderIndex].multiStore && ordersList[orderIndex].sender != '') {
-                    if (sender === 'Kotva' && ordersList[orderIndex].sender !== sender
-                        || ordersList[orderIndex].sender == 'Kotva' && ordersList[orderIndex].sender !== sender) { ordersList[orderIndex].multiStore = true }
-                }
-                if (sender === 'Outlet') sender = 'Harfa'
-                if (item.delivery === "Osobní odběr") {
-                    if (sender != 'Kotva') { ordersList[orderIndex].multiStore = true }
-                    sender = 'Kotva'
-                }
-                if (ordersList[orderIndex].sender === ''
-                    || (ordersList[orderIndex].sender === 'Kotva' && sender === 'Harfa')) 
-                    { ordersList[orderIndex].sender = sender }
-                if (ordersList[orderIndex].allItemSold && item.date == '') ordersList[orderIndex].allItemSold = false
+                const orderIndex = ordersList.findIndex(order => order.number == item.orderNumber);
+                const sender = item.storeID === 'Kotva' ? 'Harfa' : item.storeID;
+                ordersList[orderIndex].missingItem = ordersList[orderIndex].missingItem || item.storeID === 'Nejsou';
+                if (ordersList[orderIndex].sender === '') { 
+                    ordersList[orderIndex].sender = sender 
+                };
+                if (sender !== 'Nejsou' && ordersList[orderIndex].sender !== 'Mix' && ordersList[orderIndex].sender !== sender) {
+                    ordersList[orderIndex].sender = 'Mix';
+                };
+                if (ordersList[orderIndex].allItemSold && item.date == '') { ordersList[orderIndex].allItemSold = false };
             })
 
             //add returns to productList
@@ -460,7 +455,7 @@ async function getOrder(orderID) {
         })
         for (i=0; i<items.length; i++) {
             let product = items[i]
-            let storeID = "Neni"
+            let storeID = "Nejsou"
             let storePrice = 0
             let size = product.size
             let soldDate = ""
