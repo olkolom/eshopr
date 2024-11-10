@@ -595,7 +595,7 @@ async function getReturns(command) {
     return {returns}
 } 
 
-async function saveSale(items, storeID) {
+async function saveSale(items, storeID, user) {
     
     async function saveSubSale (items, voucher = 0, toStore) {
 
@@ -608,7 +608,8 @@ async function saveSale(items, storeID) {
         let returnsIndexes = []
         items.forEach((item, index) => {
             if (item.count < 0) returnsIndexes.push(index)
-            const realStorePrice = voucher === 0 ? item.storePrice : item.storePrice - voucher;
+            const itemPriceForSale = (storeID === "Harfa" || toStore === "Harfa") ? item.price : item.storePrice; // for Harfa always use order's price otherwise BST price
+            const realStorePrice = voucher === 0 ? itemPriceForSale : itemPriceForSale - voucher;
             itemsList.push({
                 orderId: item.orderNumber,
                 productId: item.productId,
@@ -623,7 +624,8 @@ async function saveSale(items, storeID) {
             totalPriceDif += item.price - realStorePrice;
         })
         const saleAdd = voucher === 0 ? {} : {voucher};
-        const newSale = { date, totalSum, totalCount, totalPriceDif, storeID, items: itemsList, ...saleAdd };
+        const time = new Date().toTimeString().slice(0,17);
+        const newSale = { date, time, user, totalSum, totalCount, totalPriceDif, storeID, items: itemsList, ...saleAdd };
         if (["Kotva", "Outlet", "Harfa"].includes(toStore) && toStore !== storeID) { 
             newSale.storeID = toStore;
             newSale.from = storeID;
@@ -657,7 +659,7 @@ async function saveSale(items, storeID) {
     };
 
     //action prepare
-    if (["Kotva", "Outlet"].includes(storeID)) {
+    if (false && ["Kotva", "Outlet"].includes(storeID)) {
         items.forEach((item, index) => {
             if (item.count > 0) {
                 if (item.productId.length > 7) {

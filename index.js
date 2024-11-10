@@ -97,8 +97,8 @@ app.get('/refresh', async (req, res, next)=> {
   if (dataProcessing === true) {return next()}
   dataProcessing = true
   req.session.data = await dataSource.getOrdersData(config.eshopUri)
-  req.session.data.stores = users[req.session.user]
-  dataProcessing = false
+  req.session.data.stores = users[req.session.user];
+  dataProcessing = false;
   res.redirect('/')
 })
 app.get('/refresh', async (req, res)=> {res.send('Double click')})
@@ -106,7 +106,7 @@ app.get('/refresh', async (req, res)=> {res.send('Double click')})
 app.use((req, res, next) => (req.session.data !== undefined) ? next() : res.redirect('/refresh'))
 
 app.get("/", (req, res)=> {
-  res.render('index', req.session.data )
+  res.render('index', {...req.session.data, user: req.session.user } )
 })
 
 app.get("/products", (req, res)=> {
@@ -164,10 +164,11 @@ app.get("/order", (req, res)=> {
 app.get("/sell", (req, res)=> {
   if (req.query.id === undefined) { return res.redirect('/') };
   const storeID = req.query.id;
+  const user = req.session.user;
   const items = req.session.data.productList.filter( item => item.action == 'p' && item.storeID == storeID );
   if (items.length !== 0) { 
     dataSource
-    .saveSale(items, storeID)
+    .saveSale(items, storeID, user)
     .then(saleSaved => saleSaved ? res.redirect(`/sales?id=${storeID}`) : res.redirect('/products'));
   } else res.redirect('/products');
 });

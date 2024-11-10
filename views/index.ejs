@@ -1,9 +1,14 @@
 <%- include('partials/header') %>
 <form method="GET" action="/ppl">
-    <a href="/refresh" class="button button1">Obnovit</a>
-    <a href="/products" class="button button1">Zboží</a>
-    <a href="/return" class="button button1">Vrácení</a>
-    <button class="button button1" action="Submit">PPL</button>
+    <div style="max-width: 1000px;">
+        <div style="float: right;"><%= user %></div>
+        <div style="display: flex; flex-flow: row wrap; width: 50%">
+            <a href="/refresh" class="button button1">Obnovit</a>
+            <a href="/products" class="button button1">Zboží</a>
+            <a href="/return" class="button button1">Vrácení</a>
+            <button class="button button1" action="Submit">PPL</button>
+        </div>
+    </div>
     <%- include('partials/tab_orders', {
             orders: ordersList.filter(order => order.delivery.slice(0,3) == 'PPL' && order.toSend),
             name: 'PPL',
