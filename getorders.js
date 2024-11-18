@@ -249,6 +249,7 @@ async function getOrdersData(eshopUri) {
                     if (typeof(size) == "number" ) {size = size.toString()}
                     if (productId.startsWith('56') && ["4","5"].includes(size)) { size += 'A' };
                     if (productId.startsWith('56') && size[2] === '/') { size = size.slice(0,3) };
+                    if (productId.startsWith('56') && size[2] === '-') { size = size.slice(0,2) + '/' };
                     //if quantity is >1 push item 'quantity' times
                     let orderQuantity = product.count
                     while (orderQuantity>0) {
@@ -462,6 +463,7 @@ async function getOrder(orderID) {
             if (typeof(size) == "number" ) {size = size.toString()}
             if (product.productId.startsWith('56') && ["4","5"].includes(product.size)) { product.size += 'A' };
             if (product.productId.startsWith('56') && product.size[2] === '/') { product.size = product.size.slice(0,3) };
+            if (product.productId.startsWith('56') && product.size[2] === '-') { product.size = product.size.slice(0,2) + '/' };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size: product.size,
