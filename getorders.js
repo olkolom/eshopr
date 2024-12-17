@@ -661,18 +661,18 @@ async function saveSale(items, storeID, user) {
     };
 
     //action prepare
-    if (["Kotva", "Outlet"].includes(storeID)) {
+    if (["Outlet"].includes(storeID)) {
         items.forEach((item, index) => {
             if (item.count > 0) {
                 if (item.productId.length > 7) {
                 //apparel
-                    if (items[index].storePrice !== items[index].price) { items[index].storePrice = items[index].price * 0.8 };
-                    //if (storeID === 'Kotva' && items[index].storePrice !== items[index].price) { items[index].storePrice = items[index].price };
-                    //if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 1) };
+                    //if (items[index].storePrice !== items[index].price) { items[index].storePrice = items[index].price * 0.8 };
+                    ///if (storeID === 'Kotva' && items[index].storePrice !== items[index].price) { items[index].storePrice = items[index].price };
+                    ///if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 1) };
                 //shoes
                 } else {
                     if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.7) };
-                    if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8 * 0.8) };
+                    //if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8 * 0.8) };
                 }
             }
         });
