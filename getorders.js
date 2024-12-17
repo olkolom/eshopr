@@ -728,15 +728,19 @@ async function saveSale(items, storeID, user) {
 async function getSales(storeID, date) {
     let sales = [];
     let daySalesTotal = 0;
+    let infoSales = 0;
     try {
-        sales = await salesCollection.find({ date: date, storeID: storeID}).toArray()
-        if (sales.length > 0) sales.forEach(sale => {daySalesTotal = daySalesTotal + sale.totalSum})
+        sales = await salesCollection.find({ date, storeID }).toArray()
+        if (sales.length > 0) sales.forEach((sale) => {
+            daySalesTotal += sale.totalSum;
+            if (sale.user && sale.user === "info@primigistore.cz") { infoSales += sale.totalSum };
+        })
         const movements = await salesCollection.find({ date: date, from: storeID}).toArray();
         if (movements.length > 0) { sales = sales.concat(movements)};
     } catch(err) {
         console.log('Get sales data error:' + err.message)
     }
-    return {salesData : sales, daySales: daySalesTotal, date, id: storeID }
+    return {salesData : sales, daySales: daySalesTotal, date, id: storeID, infoSales }
 } 
 
 async function getEan(id) {

@@ -16,6 +16,7 @@
 </head>
 <body>
     <h2>Prodeje za <%= date %> celkem <%= daySales %> Kč</h2>
+    <h4><%= infoSales !== 0 ? 'info@primigistore.cz: ' + infoSales : '' %></h4>
     <form>
         <input type="date" value="<%= date %>" name="date">
         <button name="id" value="<%= id %>" class="button button1">Prodeje</button>
@@ -35,6 +36,7 @@
                 Voucher <%= sale.voucher %> Kč
             <% } %>
         </h4>
+        <%= sale.user ? sale.user : '' %>
         <table>
             <thead>
                 <tr>
