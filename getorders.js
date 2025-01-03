@@ -166,7 +166,7 @@ async function getOrdersData(eshopUri) {
                 if (slDelivery.includes(deliveryService)) skOrder = '!'
                 const currency = order.selected_currency.code;
                 const exchangeRate = order.selected_currency.exchangeRate;
-                if (currency === 'EUR' && (order.total_per_vat['20'] !== undefined || order.total_per_vat[0] !== undefined)) { skOrder = '+' };
+                if (currency === 'EUR' && (order.total_per_vat['23'] !== undefined || order.total_per_vat[0] !== undefined)) { skOrder = '+' };
 
                 //Collect PPL data
                 const deliveryType = order.delivery.nazev_postovne;
@@ -200,17 +200,6 @@ async function getOrdersData(eshopUri) {
                 let dobirka = ''
                 if (order.payment.nazev_platba == "Platba dobírkou") {
                     dobirka = order.total.price_with_vat;
-                    /*
-                    if (order.total_per_vat['21'] == undefined) {
-                        if (order.total_per_vat['20']) {
-                            dobirka = order.total_per_vat['20'].price_with_vat
-                        } else {
-                            dobirka = order.total_per_vat[0].price_with_vat
-                        }
-                    } else {
-                        dobirka = order.total_per_vat['21'].price_with_vat
-                    }
-                    */
                     if (currency === 'EUR') { 
                         const mainPart = Math.round(dobirka * exchangeRate * 100) / 100;
                         const ending = Math.round(dobirka * exchangeRate * 100) % 10;
@@ -661,7 +650,7 @@ async function saveSale(items, storeID, user) {
     };
 
     //action prepare
-    if (["Outlet", "Kotva"].includes(storeID)) {
+    if ([].includes(storeID)) {
         items.forEach((item, index) => {
             if (item.count > 0) {
                 if (item.productId.length > 7) {
