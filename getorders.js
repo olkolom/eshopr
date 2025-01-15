@@ -432,7 +432,7 @@ async function getOrder(orderID) {
         let items = []
         order.row_list.forEach(product => {
             let size = product.variant_description.split(' ')[2]
-            if (size == "zima") { size = product.variant_description.split(' ')[3]}
+            if (size === "zima") { size = product.variant_description.split(' ')[3]}
             items.push({
                 orderId: order.id_order,
                 orderNumber: order.number,
@@ -443,20 +443,21 @@ async function getOrder(orderID) {
                 count: product.count,
             })
         })
-        for (i=0; i<items.length; i++) {
-            let product = items[i]
-            let storeID = "Nejsou"
-            let storePrice = 0
-            let size = product.size
-            let soldDate = ""
-            if (typeof(size) == "number" ) {size = size.toString()}
+        for (i = 0; i < items.length; i++) {
+            let product = items[i];
+            let storeID = 'Nejsou';
+            let storePrice = 0;
+            let size = product.size;
+            let soldDate = '';
+            let user = '';
+            if (typeof(size) == 'number' ) {size = size.toString()};
             if (product.productId.startsWith('56') && ["4","5"].includes(product.size)) { product.size += 'A' };
             if (product.productId.startsWith('56') && product.size[2] === '/') { product.size = product.size.slice(0,3) };
             if (product.productId.startsWith('56') && product.size[2] === '-') { product.size = product.size.slice(0,2) + '/' };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size: product.size,
-            })
+            });
             if (stock !== null) {
                 let i=0
                 let founded=false 
@@ -468,17 +469,15 @@ async function getOrder(orderID) {
                     }
                     i++
                 }
-            } else {
-                storeID = "Nové";
-            }
+            } else { storeID = "Nové" };
             let query = {
                     items: {$elemMatch: { 
                         orderId: product.orderNumber, 
                         productId: product.productId,
                         size: product.size,
-                        count: {$gt: 0},
+                        count: { $gt: 0 },
                     }}
-                }
+                };
             if (product.count < 0) { 
                 query = {
                     items: {$elemMatch: { 
@@ -487,17 +486,19 @@ async function getOrder(orderID) {
                         count: {$lt: 0},
                     }}
                 }
-            }
-            let sold = await salesCollection.findOne(query)
-            if (sold !== null) { 
+            };
+            let sold = await salesCollection.findOne(query);
+            if (sold !== null) {
                 soldItem = sold.items.find(e => (e.productId === product.productId && e.size === product.size ))
                 storeID = sold.storeID
                 storePrice = soldItem.price
                 soldDate = sold.date
+                user = sold.user
             }
             items[i].storeID = storeID
             items[i].storePrice = storePrice
             items[i].date = soldDate
+            items[i].user = user
         }
         orderData.items = items
     } catch(err) {
@@ -507,43 +508,41 @@ async function getOrder(orderID) {
 } 
 
 async function saveReturn(data) {
-    if (data.delivery === undefined) { data.delivery = 0 }
-    else { data.delivery = data.delivery * -1 }
-    if (data.payment === undefined) { data.payment = 0 }
-    else { data.payment = data.payment * -1 }
-    let date = new Date()
+    const delivery = !data.delivery ? 0 : data.delivery * -1;
+    const payment = !data.payment ? 0 : data.payment * -1;
+    const date = new Date().toISOString().slice(0,10);
     let newReturn = {
         ...data,
-        date: date.toISOString().slice(0,10),
-        totalSum: data.delivery + data.payment,
+        delivery,
+        payment,
+        date,
+        totalSum: delivery + payment,
+        totalPriceDif: 0,
         totalCount: 0,
-        datePay: "",
-        items: []
-    }
-    let sum =0, dif =0
+        datePay: '',
+        items: [],
+    };
     data.items.forEach(item => {
-        let itemCount= item.count
-        item.price = Math.round(item.price * -1 / item.count)
-        item.storePrice = item.storePrice * -1
-        item.count = -1 
-        item.saved = false
+        let itemCount = item.count;
+        item.price = Math.round(item.price * -1 / item.count);
+        item.storePrice *= -1;
+        item.count = -1;
+        item.saved = false;
         while (itemCount > 0) {
-            sum = sum + item.price
-            dif = dif +(item.price - item.storePrice)    
-            newReturn.items.push(item)
-            itemCount--
-            newReturn.totalCount--
-        }
-    })
-    newReturn.totalPriceDif = dif
-    newReturn.totalSum = newReturn.totalSum + sum
+            newReturn.totalSum += item.price;
+            newReturn.totalPriceDif += item.price - item.storePrice;
+            newReturn.totalCount--;
+            newReturn.items.push(item);
+            itemCount--;
+        };
+    });
     try {
         await returnsCollection.insertOne(newReturn)
     } catch(err) {
         console.log('Save return data error:' + err.message)
-    }
-    return newReturn
-} 
+    };
+    return newReturn;
+};
 
 async function getReturns(command) {
     const returns = []
@@ -586,7 +585,7 @@ async function getReturns(command) {
     return {returns}
 } 
 
-async function saveSale(items, storeID, user) {
+async function saveSale(items, storeID, activeUser) {
     
     async function saveSubSale (items, voucher = 0, toStore) {
 
@@ -597,8 +596,10 @@ async function saveSale(items, storeID, user) {
         let totalPriceDif = 0
         let itemsList = []
         let returnsIndexes = []
+        let transUser;
         items.forEach((item, index) => {
             if (item.count < 0) returnsIndexes.push(index)
+            if (item.user) { transUser = item.user };
             const itemPriceForSale = (storeID === "Harfa" || toStore === "Harfa") ? item.price : item.storePrice; // for Harfa always use order's price otherwise BST price
             const realStorePrice = voucher === 0 ? itemPriceForSale : itemPriceForSale - voucher;
             itemsList.push({
@@ -616,6 +617,7 @@ async function saveSale(items, storeID, user) {
         })
         const saleAdd = voucher === 0 ? {} : {voucher};
         const time = new Date().toTimeString().slice(0,17);
+        const user = transUser ? transUser : activeUser;
         const newSale = { date, time, user, totalSum, totalCount, totalPriceDif, storeID, items: itemsList, ...saleAdd };
         if (["Kotva", "Outlet", "Harfa"].includes(toStore) && toStore !== storeID) { 
             newSale.storeID = toStore;

@@ -188,9 +188,9 @@ app.get("/return", (req, res)=> {
   if (req.query.item !== undefined ) {
     dataSource.getOrdersByItem(req.query.item).then( orders => res.render('ret_input',orders))
   } else { 
-    if (req.query.orderid === undefined) { 
-      return res.render('ret_input', {orders:[]})
-    } else dataSource.getOrder(req.query.orderid).then(orderData => res.render('ret_form', orderData))
+    req.query.orderid && !isNaN(parseInt(req.query.orderid)) ?
+      dataSource.getOrder(req.query.orderid).then(orderData => res.render('ret_form', orderData)) :
+      res.render('ret_input', { orders : [] });
   }
 })
 
