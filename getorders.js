@@ -652,7 +652,7 @@ async function saveSale(items, storeID, activeUser) {
     };
 
     //action prepare
-    if (['Kotva'].includes(storeID)) {
+    if (['Kotva', 'Outlet'].includes(storeID)) {
         items.forEach((item, index) => {
             if (item.count > 0) {
                 items[index].storePrice = Math.round(items[index].storePrice * 0.8);
