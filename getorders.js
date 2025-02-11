@@ -236,13 +236,18 @@ async function getOrdersData(eshopUri) {
                         if (size[1] == "+") {size = size[0]}
                     }
                     if (typeof(size) == "number" ) {size = size.toString()}
-                    if (productId.startsWith('56') && ["4","5"].includes(size)) { size += 'A' };
+                    if (['56','79','78'].includes(productId.slice(0,2)) && ["4","5"].includes(size)) {
+                        const stock = await inventoryCollection.findOne({
+                            model: productId,
+                            size,
+                        });
+                        if (stock === null) { size += 'A' }; 
+                    };
                     if (productId.startsWith('56') && size[2] === '/') { size = size.slice(0,3) };
                     if (productId.startsWith('56') && size[2] === '-') { size = size.slice(0,2) + '/' };
                     //if quantity is >1 push item 'quantity' times
                     let orderQuantity = product.count
                     while (orderQuantity>0) {
-
                         //temporary solution to check more then one same item in orders, itemQuantity is for unsold items
                         let itemQuantity = 1
                         let sameOrderQuantity = 1
@@ -458,6 +463,12 @@ async function getOrder(orderID) {
                 model: product.productId,
                 size: product.size,
             });
+            if (!stock && ['79','78'].includes(product.productId.slice(0,2))) {
+                stock = await inventoryCollection.findOne({
+                    model: product.productId,
+                    size: product.size + 'A',
+                })
+            };
             if (stock !== null) {
                 let i=0
                 let founded=false 
