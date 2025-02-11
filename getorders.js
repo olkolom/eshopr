@@ -456,20 +456,21 @@ async function getOrder(orderID) {
             let soldDate = '';
             let user = '';
             if (typeof(size) == 'number' ) {size = size.toString()};
-            if (product.productId.startsWith('56') && ["4","5"].includes(product.size)) { product.size += 'A' };
-            if (product.productId.startsWith('56') && product.size[2] === '/') { product.size = product.size.slice(0,3) };
-            if (product.productId.startsWith('56') && product.size[2] === '-') { product.size = product.size.slice(0,2) + '/' };
+            if (product.productId.startsWith('56') && ["4","5"].includes(size)) { size += 'A' };
+            if (product.productId.startsWith('56') && size[2] === '/') { size = size.slice(0,3) };
+            if (product.productId.startsWith('56') && size[2] === '-') { size = size.slice(0,2) + '/' };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
-                size: product.size,
+                size,
             });
             if (!stock && ['79','78'].includes(product.productId.slice(0,2))) {
+                size += 'A';
                 stock = await inventoryCollection.findOne({
                     model: product.productId,
-                    size: product.size + 'A',
-                })
+                    size,
+                });
             };
-            if (stock !== null) {
+            if (stock) {
                 let i=0
                 let founded=false 
                 while (!founded && i < stock.inventory.length) {
@@ -485,7 +486,7 @@ async function getOrder(orderID) {
                     items: {$elemMatch: { 
                         orderId: product.orderNumber, 
                         productId: product.productId,
-                        size: product.size,
+                        size,
                         count: { $gt: 0 },
                     }}
                 };
@@ -493,14 +494,14 @@ async function getOrder(orderID) {
                 query = {
                     items: {$elemMatch: { 
                         productId: product.productId,
-                        size: product.size,
+                        size,
                         count: {$lt: 0},
                     }}
                 }
             };
             let sold = await salesCollection.findOne(query);
             if (sold !== null) {
-                soldItem = sold.items.find(e => (e.productId === product.productId && e.size === product.size ))
+                soldItem = sold.items.find(e => (e.productId === product.productId && e.size === size ))
                 storeID = sold.storeID
                 storePrice = soldItem.price
                 soldDate = sold.date
