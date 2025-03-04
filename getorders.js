@@ -170,7 +170,7 @@ async function getOrdersData(eshopUri) {
 
                 //Collect PPL data
                 const deliveryType = order.delivery.nazev_postovne;
-                const isPoint = deliveryType.startsWith('GLS ParcelShop');
+                const isPoint = deliveryType.startsWith('GLS Výdejní místa');
                 let pointID = '';
                 if (isPoint) {
                     const pointNameStart = deliveryType.indexOf('(');
