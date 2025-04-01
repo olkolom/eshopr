@@ -677,9 +677,11 @@ async function saveSale(items, storeID, activeUser) {
                     ///if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 1) };
                 //shoes
                 } else {
+                    /*
                     if (![38, 39, 58, 59, 78, 79].includes(parseInt(item.productId.slice(0,2)))) {
                         items[index].storePrice = Math.round(items[index].storePrice * 0.8)
                     };
+                    */
                     if ([58, 59].includes(parseInt(item.productId.slice(0,2))) && storeID === 'Kotva') {
                         items[index].storePrice = Math.round(items[index].storePrice * 0.7)
                     }
