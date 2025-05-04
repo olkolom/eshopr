@@ -236,6 +236,9 @@ async function getOrdersData(eshopUri) {
                         if (size[1] == "+") {size = size[0]}
                     }
                     if (typeof(size) == "number" ) {size = size.toString()}
+                    if (['-', '/'].includes(size[2]) && productId.length === 8 && ['56','57'].includes(productId.slice(0,2))) {
+                        size = size[2] === '-' ? size.split('-')[0] + '/' : size.slice(0,3);
+                    };
                     if (['56','79','78'].includes(productId.slice(0,2)) && ["4","5"].includes(size)) {
                         const stock = await inventoryCollection.findOne({
                             model: productId,
@@ -243,8 +246,6 @@ async function getOrdersData(eshopUri) {
                         });
                         if (stock === null) { size += 'A' }; 
                     };
-                    if (productId.startsWith('56') && size[2] === '/') { size = size.slice(0,3) };
-                    if (productId.startsWith('56') && size[2] === '-') { size = size.slice(0,2) + '/' };
                     //if quantity is >1 push item 'quantity' times
                     let orderQuantity = product.count
                     while (orderQuantity>0) {
@@ -457,8 +458,9 @@ async function getOrder(orderID) {
             let user = '';
             if (typeof(size) == 'number' ) {size = size.toString()};
             if (product.productId.startsWith('56') && ["4","5"].includes(size)) { size += 'A' };
-            if (product.productId.startsWith('56') && size[2] === '/') { size = size.slice(0,3) };
-            if (product.productId.startsWith('56') && size[2] === '-') { size = size.slice(0,2) + '/' };
+            if (['-', '/'].includes(size[2]) && productId.length === 8 && ['56','57'].includes(productId.slice(0,2))) {
+                size = size[2] === '-' ? size.split('-')[0] + '/' : size.slice(0,3);
+            };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size,
