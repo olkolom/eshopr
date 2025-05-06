@@ -458,7 +458,7 @@ async function getOrder(orderID) {
             let user = '';
             if (typeof(size) == 'number' ) {size = size.toString()};
             if (product.productId.startsWith('56') && ["4","5"].includes(size)) { size += 'A' };
-            if (['-', '/'].includes(size[2]) && productId.length === 8 && ['56','57'].includes(productId.slice(0,2))) {
+            if (['-', '/'].includes(size[2]) && product.productId.length === 8 && ['56','57'].includes(product.productId.slice(0,2))) {
                 size = size[2] === '-' ? size.split('-')[0] + '/' : size.slice(0,3);
             };
             let stock = await inventoryCollection.findOne({
