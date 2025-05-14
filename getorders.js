@@ -687,7 +687,7 @@ async function saveSale(items, storeID, activeUser) {
                     if ([58, 59].includes(parseInt(item.productId.slice(0,2))) && storeID === 'Kotva') {
                         items[index].storePrice = Math.round(items[index].storePrice * 0.7 * 0.8)
                     } else {
-                        items[index].storePrice = Math.round(items[index].storePrice * 0.8)
+                        if (item.productType !== "Sandály") { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
                     }
                     //if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.7) };
                     //if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) };
