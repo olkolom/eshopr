@@ -1,5 +1,15 @@
 const { MongoClient, ObjectId } = require('mongodb')
 
+const fs = require('fs');
+let actionModelsFile = "";
+try {
+    actionModelsFile = fs.readFileSync(__dirname +'/art_action.txt', {encoding: 'utf-8'})
+} catch (err) {
+    console.log('Problem with reading action articles file ', err.message)
+}
+const actionArts = actionModelsFile.split('\r\n');
+console.log(`${actionArts.length} action articles ${actionArts[0]} ${typeof actionArts[0]}`);
+
 //implementation of http get
 function getRequest (url) {
     return new Promise((resolve, reject) => {
@@ -230,6 +240,7 @@ async function getOrdersData(eshopUri) {
                     let sizeParts = product.variant_description.split(' ')
                     let size = sizeParts[2] ? sizeParts[2] : "";
                     let isSolomio = false;
+                    const isAction = actionArts.includes(productId + "");
                     if (sizeParts[3] !== undefined) { size = size + ' ' + sizeParts[3]}
                     if (sizeParts[2] === "zima") { 
                         size = sizeParts[3]
@@ -325,6 +336,7 @@ async function getOrdersData(eshopUri) {
                             index: productIndex,
                             pic: productId.split(" ").join("-"),
                             isSolomio,
+                            isAction,
                         })
                         productIndex++
                         orderQuantity--
