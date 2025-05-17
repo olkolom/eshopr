@@ -228,7 +228,7 @@ async function getOrdersData(eshopUri) {
                     const product = order.row_list[i]
                     let productId = product.product_number
                     let sizeParts = product.variant_description.split(' ')
-                    let size = sizeParts[2]
+                    let size = sizeParts[2] ? sizeParts[2] : "";
                     let isSolomio = false;
                     if (sizeParts[3] !== undefined) { size = size + ' ' + sizeParts[3]}
                     if (sizeParts[2] === "zima") { 
