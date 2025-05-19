@@ -465,7 +465,7 @@ async function getOrder(orderID) {
             let product = items[i];
             let storeID = 'Nejsou';
             let storePrice = 0;
-            let size = product.size;
+            let size = product.size ? product.size : "";
             let soldDate = '';
             let user = '';
             if (typeof(size) == 'number' ) {size = size.toString()};
