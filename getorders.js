@@ -240,7 +240,7 @@ async function getOrdersData(eshopUri) {
                     let sizeParts = product.variant_description.split(' ')
                     let size = sizeParts[2] ? sizeParts[2] : "";
                     let isSolomio = false;
-                    const isAction = actionArts.includes(productId + "");
+                    const isAction = !(actionArts.includes(productId + "") || ['58','59', '38', '39'].includes(productId.slice(0,2)));
                     if (sizeParts[3] !== undefined) { size = size + ' ' + sizeParts[3]}
                     if (sizeParts[2] === "zima") { 
                         size = sizeParts[3]
@@ -679,31 +679,26 @@ async function saveSale(items, storeID, activeUser) {
 
     //action prepare
     if (['Kotva'].includes(storeID)) {
+        const moreActionItems = ["57101021", "57101031", "57101041", "57101501", "57101511", "57102031", "57102041", "57102051", "57102541", "57102571", "57111511", "57121031", "57121041", "57121051", "57121502", "57121521", "57122021", "57122031", "57122041", "57122072", "57122521", "57122551", "57141021", "57141501", "57151021", "57151031", "57151061", "57151071", "57151531", "57151541", "57152001", "57152021", "57162021", "57162501", "57211541", "57212511"];
         items.forEach((item, index) => {
             if (item.count > 0) {
+                let actionReducer = 1;
                 if (item.productId.length > 7) {
                 //apparel
                     if (item.productId.startsWith('57')) {
-                        items[index].storePrice = Math.round(items[index].storePrice * 0.8)
-                    }
-                    //if (items[index].storePrice !== items[index].price) { items[index].storePrice = items[index].price };
-                    ///if (storeID === 'Kotva' && items[index].storePrice !== items[index].price) { items[index].storePrice = items[index].price };
-                    ///if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 1) };
+                        actionReducer = actionArts.includes(item.productId) ? 0.6 : 0.8;
+                        if (moreActionItems.includes(item.productId)) { actionReducer = 0.5 };
+                    };
                 //shoes
                 } else {
-                    /*
-                    if (![38, 39, 58, 59, 78, 79].includes(parseInt(item.productId.slice(0,2)))) {
-                        items[index].storePrice = Math.round(items[index].storePrice * 0.8)
-                    };
-                    */
-                    if ([58, 59].includes(parseInt(item.productId.slice(0,2))) && storeID === 'Kotva') {
-                        items[index].storePrice = Math.round(items[index].storePrice * 0.7 * 0.8)
+                    if ([58, 59, 38, 39].includes(parseInt(item.productId.slice(0,2)))) {
+                        actionReducer = 0.7 * 0.8;
                     } else {
-                        if (item.productType !== "Sandály") { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                        actionReducer = item.productType === "Sandály" ? 0.9 : 0.8;
+                        if (actionArts.includes(item.productId)) { actionReducer = 0.8 };
                     }
-                    //if (storeID === 'Outlet') { items[index].storePrice = Math.round(items[index].storePrice * 0.7) };
-                    //if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) };
-                }
+                };
+                items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
             }
         });
     };
