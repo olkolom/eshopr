@@ -691,12 +691,7 @@ async function saveSale(items, storeID, activeUser) {
                     };
                 //shoes
                 } else {
-                    if ([58, 59, 38, 39].includes(parseInt(item.productId.slice(0,2)))) {
-                        actionReducer = 0.7 * 0.8;
-                    } else {
-                        actionReducer = item.productType === "Sandály" ? 0.9 : 0.8;
-                        if (actionArts.includes(item.productId)) { actionReducer = 0.8 };
-                    }
+                    actionReducer = [58, 59, 38, 39].includes(parseInt(item.productId.slice(0,2))) ? 0.7 * 0.8 : 0.8;
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
             }
