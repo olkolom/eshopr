@@ -9,6 +9,7 @@ try {
 }
 const actionArts = actionModelsFile.split('\r\n');
 console.log(`${actionArts.length} action articles ${actionArts[0]} ${typeof actionArts[0]}`);
+const noDiscountItems = ['57212071', '57221122', '57221123', '57221161', '57222152', '57251041', '57221151', '57211061', '57222121', '57161031', '57222122', '57216501', '57221152', '57222151', '57166021', '57212061', '57216521', '57222123', '57221162', '57211071', '57252041', '57216522', '57221121', '57162031', '57221131', '57221132', '57221133', '57222131', '57222132', '57222133', '57241121', '57241122', '57241123', '57242121', '57242122', '57242123', '57222161', '57222162', '57111631', '57111632', '57111633', '57112631', '57112632', '57112633'];
 
 //implementation of http get
 function getRequest (url) {
@@ -237,19 +238,22 @@ async function getOrdersData(eshopUri) {
                 for (i=order.row_list.length -1; i >= 0; i--) {
                     const product = order.row_list[i]
                     let productId = product.product_number
+                    let isSolomio = false;
+                    const isAction = !((actionArts.includes(productId + "") || noDiscountItems.includes(productId + "")) || ['58','59', '38', '39'].includes(productId.slice(0,2)));
+                    //size transform
                     let sizeParts = product.variant_description.split(' ')
                     let size = sizeParts[2] ? sizeParts[2] : "";
-                    let isSolomio = false;
-                    const isAction = !(actionArts.includes(productId + "") || ['58','59', '38', '39'].includes(productId.slice(0,2)));
-                    if (sizeParts[3] !== undefined) { size = size + ' ' + sizeParts[3]}
+                    if (sizeParts[3] !== undefined) { size += ' ' + sizeParts[3] };
                     if (sizeParts[2] === "zima") { 
-                        size = sizeParts[3]
-                        if (size[1] == "+") {size = size[0]}
-                    }
-                    if (typeof(size) == "number" ) {size = size.toString()}
+                        size = sizeParts[3];
+                        if (size[1] == "+") { size = size[0] }
+                    };
                     if (['-', '/'].includes(size[2]) && productId.length === 8 && ['56','57'].includes(productId.slice(0,2))) {
                         size = size[2] === '-' ? size.split('-')[0] + '/' : size.slice(0,3);
                     };
+                    if (size === '6R+') { size = '6/A'};
+                    if (size === '12/13R') { size = '12/'};
+                    if (size === '4R+') { size = '4/6'};
                     if (['56','79','78'].includes(productId.slice(0,2)) && ["4","5"].includes(size)) {
                         const stock = await inventoryCollection.findOne({
                             model: productId,
@@ -465,14 +469,16 @@ async function getOrder(orderID) {
             let product = items[i];
             let storeID = 'Nejsou';
             let storePrice = 0;
-            let size = product.size ? product.size : "";
             let soldDate = '';
             let user = '';
-            if (typeof(size) == 'number' ) {size = size.toString()};
+            let size = product.size ? product.size + "" : "";
             if (product.productId.startsWith('56') && ["4","5"].includes(size)) { size += 'A' };
             if (['-', '/'].includes(size[2]) && product.productId.length === 8 && ['56','57'].includes(product.productId.slice(0,2))) {
                 size = size[2] === '-' ? size.split('-')[0] + '/' : size.slice(0,3);
             };
+            if (size === '6R+') { size = '6/A'};
+            if (size === '12/13R') { size = '12/'};
+            if (size === '4R+') { size = '4/6'};
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size,
@@ -685,7 +691,7 @@ async function saveSale(items, storeID, activeUser) {
                 let actionReducer = 1;
                 if (item.productId.length > 7) {
                 //apparel
-                    if (item.productId.startsWith('57')) {
+                    if (item.productId.startsWith('57') && !noDiscountItems.includes(item.productId)) {
                         actionReducer = actionArts.includes(item.productId) ? 0.6 : 0.8;
                         if (moreActionItems.includes(item.productId)) { actionReducer = 0.5 };
                     };
