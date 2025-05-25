@@ -697,7 +697,9 @@ async function saveSale(items, storeID, activeUser) {
                     };
                 //shoes
                 } else {
-                    actionReducer = [58, 59, 38, 39].includes(parseInt(item.productId.slice(0,2))) ? 0.7 * 0.8 : 0.8;
+                    actionReducer = 0.8;
+                    if (item.productId.startsWith('5')) { actionReducer = 0.7 };
+                    if (item.productId.startsWith('3')) { actionReducer = 0.5 };
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
             }
