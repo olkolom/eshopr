@@ -684,7 +684,7 @@ async function saveSale(items, storeID, activeUser) {
     };
 
     //action prepare
-    if (['Kotva'].includes(storeID)) {
+    if (['Kotva', 'Outlet'].includes(storeID)) {
         const moreActionItems = ["57101021", "57101031", "57101041", "57101501", "57101511", "57102031", "57102041", "57102051", "57102541", "57102571", "57111511", "57121031", "57121041", "57121051", "57121502", "57121521", "57122021", "57122031", "57122041", "57122072", "57122521", "57122551", "57141021", "57141501", "57151021", "57151031", "57151061", "57151071", "57151531", "57151541", "57152001", "57152021", "57162021", "57162501", "57211541", "57212511"];
         items.forEach((item, index) => {
             if (item.count > 0) {
@@ -700,6 +700,7 @@ async function saveSale(items, storeID, activeUser) {
                     actionReducer = 0.8;
                     if (item.productId.startsWith('5')) { actionReducer = 0.7 };
                     if (item.productId.startsWith('3')) { actionReducer = 0.5 };
+                    if (item.storeID === 'Outlet' && item.productType !== 'Sandály') { actionReducer = 0.8 }
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
             }
