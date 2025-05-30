@@ -700,7 +700,7 @@ async function saveSale(items, storeID, activeUser) {
                     actionReducer = 0.8;
                     if (item.productId.startsWith('5')) { actionReducer = 0.7 };
                     if (item.productId.startsWith('3')) { actionReducer = 0.5 };
-                    if (item.storeID === 'Outlet' && item.productType !== 'Sandály') { actionReducer = 0.8 }
+                    if (item.storeID === 'Outlet') { actionReducer = item.productType === 'Sandály' ? 1 : 0.8 }
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
             }
@@ -741,6 +741,7 @@ async function saveSale(items, storeID, activeUser) {
     let saleSaved = false;
     try {
         saleSaved = itemsForSale.length === 0 ? true : await saveSubSale(itemsForSale);
+        //console.log(itemsForSale);
         if (saleSaved && action && actionItem) {
             const result = await saveSubSale([actionItem], voucher);
             //if (result) { actionItem.action = "u" };
