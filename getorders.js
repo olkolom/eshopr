@@ -700,7 +700,7 @@ async function saveSale(items, storeID, activeUser) {
                     actionReducer = 0.8;
                     if (item.productId.startsWith('5')) { actionReducer = 0.7 };
                     if (item.productId.startsWith('3')) { actionReducer = 0.5 };
-                    if (item.storeID === 'Outlet') { actionReducer = item.productType === 'Sandály' ? 1 : 0.8 }
+                    if (item.storeID === 'Outlet') { actionReducer = item.productType === 'Sandály' ? 1 : 0.7 }
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
             }
