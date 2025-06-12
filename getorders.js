@@ -9,7 +9,7 @@ try {
 }
 const actionArts = actionModelsFile.split('\r\n');
 console.log(`${actionArts.length} action articles ${actionArts[0]} ${typeof actionArts[0]}`);
-const noDiscountItems = ['57212071', '57221122', '57221123', '57221161', '57222152', '57251041', '57221151', '57211061', '57222121', '57161031', '57222122', '57216501', '57221152', '57222151', '57166021', '57212061', '57216521', '57222123', '57221162', '57211071', '57252041', '57216522', '57221121', '57162031', '57221131', '57221132', '57221133', '57222131', '57222132', '57222133', '57241121', '57241122', '57241123', '57242121', '57242122', '57242123', '57222161', '57222162', '57111631', '57111632', '57111633', '57112631', '57112632', '57112633'];
+const noDiscountItems = ['57111631', '57111632', '57111633', '57112631', '57112632', '57112633', '57161031', '57162031', '57166021', '57211061', '57211071', '57212061', '57212071', '57216501', '57216521', '57216522', '57221121', '57221122', '57221123', '57221131', '57221132', '57221133', '57221151', '57221152', '57221161', '57221162', '57222121', '57222122', '57222123', '57222131', '57222132', '57222133', '57222151', '57222152', '57222161', '57222162', '57241121', '57241122', '57241123', '57242121', '57242122', '57242123', '57251041', '57252041'];
 
 //implementation of http get
 function getRequest (url) {
@@ -692,12 +692,13 @@ async function saveSale(items, storeID, activeUser) {
                 if (item.productId.length > 7) {
                 //apparel
                     if (item.productId.startsWith('57') && !noDiscountItems.includes(item.productId)) {
-                        actionReducer = actionArts.includes(item.productId) ? 0.6 : 0.8;
+                        actionReducer = actionArts.includes(item.productId) ? 0.5 : 0.8;
                         if (moreActionItems.includes(item.productId)) { actionReducer = 0.5 };
                     };
                 //shoes
                 } else {
                     actionReducer = 0.8;
+                    if (item.storeID === 'Kotva' && (item.productType !== 'Sandály' || actionArts.includes(item.productId))) { actionReducer = 0.7 };
                     if (item.productId.startsWith('5')) { actionReducer = 0.7 };
                     if (item.productId.startsWith('3')) { actionReducer = 0.5 };
                     if (item.storeID === 'Outlet') { actionReducer = item.productType === 'Sandály' ? 1 : 0.7 }
@@ -741,7 +742,7 @@ async function saveSale(items, storeID, activeUser) {
     let saleSaved = false;
     try {
         saleSaved = itemsForSale.length === 0 ? true : await saveSubSale(itemsForSale);
-        //console.log(itemsForSale);
+        // console.log(itemsForSale);
         if (saleSaved && action && actionItem) {
             const result = await saveSubSale([actionItem], voucher);
             //if (result) { actionItem.action = "u" };
