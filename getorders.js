@@ -699,8 +699,9 @@ async function saveSale(items, storeID, activeUser) {
                 } else {
                     actionReducer = 0.8;
                     if (item.storeID === 'Kotva' && (item.productType !== 'Sandály' || actionArts.includes(item.productId))) { actionReducer = 0.7 };
-                    if (item.storeID === 'Outlet' || item.productId.startsWith('5')) { actionReducer = 0.7 };
+                    if (item.productId.startsWith('5')) { actionReducer = 0.7 };
                     if (item.productId.startsWith('3')) { actionReducer = 0.5 }
+                    if (item.storeID === 'Outlet') { actionReducer = 1 };
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
             }
