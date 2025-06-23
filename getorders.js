@@ -164,6 +164,11 @@ async function getOrdersData(eshopUri) {
                 if (order.delivery.nazev_postovne == "Osobní odběr" 
                     && order.payment.nazev_platba == "Platba předem na účet" 
                     && order.vyrizeno == "g") status='Ano'
+                if (order.delivery.nazev_postovne === "Osobní odběr" 
+                    && order.payment.nazev_platba.startsWith('Hotově')) {
+                        status = 'Ne'
+                        toSend = true
+                }
                 if (order.payment.nazev_platba == "Platba dobírkou" || status=='Ano') toSend = true
                 let phone = order.customer.delivery_information.phone
                 let psc = order.customer.delivery_information.zip
