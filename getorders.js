@@ -9,7 +9,7 @@ try {
 }
 const actionArts = actionModelsFile.split('\r\n');
 console.log(`${actionArts.length} action articles ${actionArts[0]} ${typeof actionArts[0]}`);
-const noDiscountItems = ['57161031', '57162031', '57166021', '57211061', '57211071', '57212061', '57212071', '57216501', '57216521', '57216522', '57221121', '57221122', '57221123', '57221151', '57221152', '57221161', '57221162', '57222121', '57222122', '57222123', '57222151', '57222152', '57222161', '57222162', '57251041', '57252041'];
+const noDiscountItems = ['57121093', '57122001', '57161031', '57162031', '57166021', '57211061', '57211071', '57212061', '57212071', '57216501', '57216521', '57216522', '57221121', '57221122', '57221123', '57221151', '57221152', '57221161', '57221162', '57222121', '57222122', '57222123', '57222151', '57222152', '57222161', '57222162', '57251041', '57252041'];
 
 //implementation of http get
 function getRequest (url) {
@@ -244,7 +244,7 @@ async function getOrdersData(eshopUri) {
                     const product = order.row_list[i]
                     let productId = product.product_number
                     let isSolomio = false;
-                    const isAction = !((actionArts.includes(productId + "") || noDiscountItems.includes(productId + "")) || ['58','59', '38', '39'].includes(productId.slice(0,2)));
+                    const isAction = false //!((actionArts.includes(productId + "") || noDiscountItems.includes(productId + "")) || ['58','59', '38', '39'].includes(productId.slice(0,2)));
                     //size transform
                     let sizeParts = product.variant_description.split(' ')
                     let size = sizeParts[2] ? sizeParts[2] : "";
@@ -690,22 +690,21 @@ async function saveSale(items, storeID, activeUser) {
 
     //action prepare
     if (['Kotva', 'Outlet'].includes(storeID)) {
-        const moreActionItems = ["57101021", "57101031", "57101041", "57101501", "57101511", "57102031", "57102041", "57102051", "57102541", "57102571", "57111511", "57121031", "57121041", "57121051", "57121502", "57121521", "57122021", "57122031", "57122041", "57122072", "57122521", "57122551", "57141021", "57141501", "57151021", "57151031", "57151061", "57151071", "57151531", "57151541", "57152001", "57152021", "57162021", "57162501", "57211541", "57212511"];
+        const moreActionItems = [];
         items.forEach((item, index) => {
             if (item.count > 0) {
                 let actionReducer = 1;
                 if (item.productId.length > 7) {
                 //apparel
                     if (item.productId.startsWith('57') && !noDiscountItems.includes(item.productId)) {
-                        actionReducer = actionArts.includes(item.productId) ? 0.5 : 0.8;
+                        actionReducer = !actionArts.includes(item.productId) ? 0.5 : 0.8;
                         if (moreActionItems.includes(item.productId)) { actionReducer = 0.5 };
                     };
                 //shoes
                 } else {
                     actionReducer = 0.8;
                     if (item.storeID === 'Kotva' && (item.productType !== 'Sandály' || actionArts.includes(item.productId))) { actionReducer = 0.7 };
-                    if (item.productId.startsWith('5')) { actionReducer = 0.7 };
-                    if (item.productId.startsWith('3')) { actionReducer = 0.5 }
+                    if (item.productId.startsWith('3') || item.productId.startsWith('5')) { actionReducer = 0.5 }
                     if (item.storeID === 'Outlet') { actionReducer = 1 };
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
