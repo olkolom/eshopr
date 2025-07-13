@@ -259,6 +259,7 @@ async function getOrdersData(eshopUri) {
                     if (size === '6R+') { size = '6/A'};
                     if (size === '12/13R') { size = '12/'};
                     if (size === '4R+') { size = '4/6'};
+                    if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
                     if (['56','79','78'].includes(productId.slice(0,2)) && ["4","5"].includes(size)) {
                         const stock = await inventoryCollection.findOne({
                             model: productId,
@@ -484,6 +485,7 @@ async function getOrder(orderID) {
             if (size === '6R+') { size = '6/A'};
             if (size === '12/13R') { size = '12/'};
             if (size === '4R+') { size = '4/6'};
+            if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size,
