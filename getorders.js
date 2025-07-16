@@ -260,6 +260,8 @@ async function getOrdersData(eshopUri) {
                     if (size === '12/13R') { size = '12/'};
                     if (size === '4R+') { size = '4/6'};
                     if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
+                    if (size === '9M+') { size = '9/M' };
+                    if (size === '1/3 M' || size === '6/9 M') { size = size.slice(0,3) };
                     if (['56','79','78'].includes(productId.slice(0,2)) && ["4","5"].includes(size)) {
                         const stock = await inventoryCollection.findOne({
                             model: productId,
@@ -486,6 +488,8 @@ async function getOrder(orderID) {
             if (size === '12/13R') { size = '12/'};
             if (size === '4R+') { size = '4/6'};
             if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
+            if (size === '9M+') { size = '9/M' };
+            if (size === '1/3 M' || size === '6/9 M') { size = size.slice(0,3) };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size,
@@ -704,8 +708,7 @@ async function saveSale(items, storeID, activeUser) {
                     };
                 //shoes
                 } else {
-                    actionReducer = 0.8;
-                    if (item.storeID === 'Kotva' && (item.productType !== 'Sandály' || actionArts.includes(item.productId))) { actionReducer = 0.7 };
+                    actionReducer = 0.7;
                     if (item.productId.startsWith('3') || item.productId.startsWith('5')) { actionReducer = 0.5 }
                     if (item.storeID === 'Outlet') { actionReducer = 1 };
                 };
