@@ -703,8 +703,8 @@ async function saveSale(items, storeID, activeUser) {
                 if (item.productId.length > 7) {
                 //apparel
                     if (item.productId.startsWith('57') && !noDiscountItems.includes(item.productId)) {
-                        actionReducer = !actionArts.includes(item.productId) ? 0.5 : 0.8;
-                        if (moreActionItems.includes(item.productId)) { actionReducer = 0.5 };
+                        actionReducer = !actionArts.includes(item.productId) ? 0.4999 : 0.8;
+                        if (moreActionItems.includes(item.productId)) { actionReducer = 0.4999 };
                     };
                 //shoes
                 } else {
