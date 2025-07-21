@@ -703,13 +703,13 @@ async function saveSale(items, storeID, activeUser) {
                 if (item.productId.length > 7) {
                 //apparel
                     if (item.productId.startsWith('57') && !noDiscountItems.includes(item.productId)) {
-                        actionReducer = !actionArts.includes(item.productId) ? 0.4999 : 0.8;
+                        actionReducer = !actionArts.includes(item.productId) ? 0.4999 : 0.4999;
                         if (moreActionItems.includes(item.productId)) { actionReducer = 0.4999 };
                     };
                 //shoes
                 } else {
                     actionReducer = 0.7;
-                    if (item.productId.startsWith('3') || item.productId.startsWith('5')) { actionReducer = 0.5 }
+                    if (item.productId.startsWith('3') || item.productId.startsWith('5')) { actionReducer = 1 }
                     if (item.storeID === 'Outlet') { actionReducer = 1 };
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
