@@ -713,6 +713,7 @@ async function saveSale(items, storeID, activeUser) {
                     if (item.storeID === 'Outlet') { actionReducer = 1 };
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
+                if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
             }
         });
     };
