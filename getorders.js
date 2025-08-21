@@ -709,7 +709,7 @@ async function saveSale(items, storeID, activeUser) {
                 //shoes
                 } else {
                     actionReducer = 0.7;
-                    if (item.productId.startsWith('3') || item.productId.startsWith('5')) { actionReducer = 1 }
+                    if (item.productId.startsWith('3') || item.productId.startsWith('5') || item.productId.startsWith('8')) { actionReducer = 1 }
                     if (item.storeID === 'Outlet') { actionReducer = 1 };
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
