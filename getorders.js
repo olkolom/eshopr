@@ -703,17 +703,15 @@ async function saveSale(items, storeID, activeUser) {
                 if (item.productId.length > 7) {
                 //apparel
                     if (item.productId.startsWith('57') && !noDiscountItems.includes(item.productId)) {
-                        actionReducer = !actionArts.includes(item.productId) ? 0.5 : 0.5;
-                        if (moreActionItems.includes(item.productId)) { actionReducer = 0.5 };
+                        actionReducer = 0.5
                     };
                 //shoes
                 } else {
                     actionReducer = 0.7;
-                    if (item.productId.startsWith('3') || item.productId.startsWith('5') || item.productId.startsWith('8')) { actionReducer = 1 }
-                    if (item.storeID === 'Outlet') { actionReducer = 1 };
+                    if (item.storeID === 'Outlet' || /^[358]/.test(item.productId)) { actionReducer = 1 }
                 };
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer);
-                if (storeID === 'Kotva') { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
+                if (storeID === 'Kotva' && actionReducer < 1) { items[index].storePrice = Math.round(items[index].storePrice * 0.8) }
             }
         });
     };
