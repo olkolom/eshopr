@@ -1,4 +1,3 @@
-const dotenv =  require('dotenv')
 const { google } = require('googleapis')
 const express = require('express')
 const session = require('express-session')
@@ -9,7 +8,6 @@ const fs = require('fs')
 const dbModule = require ('./getorders.js')
 const users = require('./users.json')
 
-dotenv.config()
 const config = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,

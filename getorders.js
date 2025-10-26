@@ -1,15 +1,7 @@
 const { MongoClient, ObjectId } = require('mongodb')
 
-const fs = require('fs');
-let actionModelsFile = "";
-try {
-    actionModelsFile = fs.readFileSync(__dirname +'/art_action.txt', {encoding: 'utf-8'})
-} catch (err) {
-    console.log('Problem with reading action articles file ', err.message)
-}
-const actionArts = actionModelsFile.split('\r\n');
-console.log(`${actionArts.length} action articles ${actionArts[0]} ${typeof actionArts[0]}`);
-const noDiscountItems = ['57121093', '57122001', '57161031', '57162031', '57166021', '57211061', '57211071', '57212061', '57212071', '57216501', '57216521', '57216522', '57221121', '57221122', '57221123', '57221151', '57221152', '57221161', '57221162', '57222121', '57222122', '57222123', '57222151', '57222152', '57222161', '57222162', '57251041', '57252041'];
+const actionArts = [];
+const noDiscountItems = []
 
 //implementation of http get
 function getRequest (url) {
