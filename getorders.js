@@ -694,17 +694,16 @@ async function saveSale(items, storeID, activeUser) {
                 let actionReducer = 1;
                 if (item.productId.length > 7) {
                 //apparel
-                    if (item.productId.startsWith('57') && !noDiscountItems.includes(item.productId)) {
-                        actionReducer = 0.8
-                    }
                     if (item.productId.startsWith('52') || item.productId.startsWith('54') || item.productId.startsWith('56')) {
                         actionReducer = 0.7 * 0.7
                     }
                 //shoes
                 } else {
-                    if (/^[357]/.test(item.productId)) { actionReducer = 0.8 }
                     if (/^[246]/.test(item.productId) && storeID === 'Kotva') { 
                         actionReducer = 0.7 * 0.7
+                    }
+                    if (/^[246]/.test(item.productId) && storeID === 'Outlet') { 
+                        actionReducer = 0.7
                     }
                 }
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer)

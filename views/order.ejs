@@ -73,7 +73,7 @@
             <% items.forEach((item, index) => { %>
                 <tr>
                     <td style="font-size: 1.5em;"><%= index+1 %></td>
-                    <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId.replace(' ', '-') %>-1.jpg" alt="" border=3 width=100></img></td>
+                    <td><a href="https://media.primigistore.cz/webp/<%= item.productId.replace(' ', '-') %>-1.webp"><img src="https://media.primigistore.cz/webp/<%= item.productId.replace(' ', '-') %>-1.webp" alt="" border=3 width=100></img></td>
                     <td><a style="font-size: 2em;" href="/return?item=<%= item.productId %>*<%= item.size %>"><%= item.productId %></a></td>
                     <td style="font-size: 2em;"><%= item.size %></td>
                     <td style="font-size: 1.5em;"><%= item.price + ' Kč' %></td>
