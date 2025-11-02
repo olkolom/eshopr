@@ -249,11 +249,10 @@ async function getOrdersData(eshopUri) {
                         size = size[2] === '-' ? size.split('-')[0] + '/' : size.slice(0,3);
                     };
                     if (size === '6R+') { size = '6/A'};
-                    if (size === '12/13R') { size = '12/'};
                     if (size === '4R+') { size = '4/6'};
-                    if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
                     if (size === '9M+') { size = '9/M' };
-                    if (size === '1/3 M' || size === '6/9 M') { size = size.slice(0,3) };
+                    if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
+                    if (["8/9R", "6/7R", "4/5R", "10/11R", "1/3 M", "6/9 M", "12/13R"].includes(size)) { size = size.slice(0,3) };
                     if (['56','79','78'].includes(productId.slice(0,2)) && ["4","5"].includes(size)) {
                         const stock = await inventoryCollection.findOne({
                             model: productId,
@@ -477,11 +476,10 @@ async function getOrder(orderID) {
                 size = size[2] === '-' ? size.split('-')[0] + '/' : size.slice(0,3);
             };
             if (size === '6R+') { size = '6/A'};
-            if (size === '12/13R') { size = '12/'};
             if (size === '4R+') { size = '4/6'};
-            if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
             if (size === '9M+') { size = '9/M' };
-            if (size === '1/3 M' || size === '6/9 M') { size = size.slice(0,3) };
+            if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
+            if (["8/9R", "6/7R", "4/5R", "10/11R", "1/3 M", "6/9 M", "12/13R"].includes(size)) { size = size.slice(0,3) };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size,
