@@ -226,7 +226,7 @@ async function getOrdersData(eshopUri) {
                     const product = order.row_list[i]
                     let productId = product.product_number
                     let isSolomio = false;
-                    const isAction = false //!((actionArts.includes(productId + "") || noDiscountItems.includes(productId + "")) || ['58','59', '38', '39'].includes(productId.slice(0,2)));
+                    const isAction = ['58'].includes(productId.slice(0,2)) && actionArts.includes(productId + "");
                     //size transform
                     let sizeParts = product.variant_description.split(' ')
                     let size = sizeParts[2] ? sizeParts[2] : "";
