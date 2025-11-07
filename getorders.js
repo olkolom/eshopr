@@ -1,25 +1,7 @@
 const { MongoClient, ObjectId } = require('mongodb')
 
 const actionArts = [];
-const noDiscountItems = []
-
-//implementation of http get
-function getRequest (url) {
-    return new Promise((resolve, reject) => {
-        const lib = url.startsWith('https') ? require('https') : require('http')
-        const request = lib.get(url, response => {
-            if (response.statusCode < 200 || response.statusCode > 299) {
-                reject(new Error('Failed to load, status code: ' + response.statusCode))
-             }
-            const body = []
-            response.on('data', chunk => {
-                body.push(chunk)
-            })
-            response.on('end', () => resolve(body.join('')))
-          })
-        request.on('error', err => reject(err))
-    })
-}
+const actionArtsUrl = process.env.DATA_URL + 'actionarts';
 
 //append legacy order state to the order object
 function legacyApi(orders) {
@@ -63,12 +45,12 @@ function getApiOrders (url, limit, date, after ) {
         let direction
         after ? direction =  '&after=' : direction =  '&before='
         if (date) addToUrl = addToUrl + direction + Math.round(new Date(date).getTime()/1000)
-        getRequest (url + addToUrl)
+        fetch(url + addToUrl)
+        .then(response => response.json())
         .then(data => {
-            const dataObj = JSON.parse(data)
-            if (dataObj.success) {
-                console.log(` Loaded from API ${dataObj.params.orderList.length} orders`)
-                resolve (legacyApi(dataObj.params.orderList))
+            if (data.success) {
+                console.log(` Loaded from API ${data.params.orderList.length} orders`)
+                resolve (legacyApi(data.params.orderList))
             } else {
                 reject(new Error('Failed to load from API'))
             }
@@ -88,6 +70,14 @@ async function getOrdersData(eshopUri) {
     const workStatus = ['c','d','n','g']
     try {
 	//add fresh and update new, paid and unpaid orders
+        const actionArtsData = await fetch(actionArtsUrl);
+        if (actionArtsData.ok) {
+            const loadedArts = await actionArtsData.text();
+            actionArts.push(...loadedArts.split(/\r?\n/).filter(line => line.trim() !== ''));
+            console.log(` Loaded ${actionArts.length} action arts`);
+        } else {
+            console.log('Problem with loading action arts data');
+        }
         console.log(' Getting orders from DB');
         const ordersToUpdate = await ordersCollection.find(
             { vyrizeno : { $in: workStatus } }, 
@@ -694,6 +684,9 @@ async function saveSale(items, storeID, activeUser) {
                 //apparel
                     if (item.productId.startsWith('52') || item.productId.startsWith('54') || item.productId.startsWith('56')) {
                         actionReducer = 0.7 * 0.7
+                    }
+                    if (actionArts.includes(item.productId)) {
+                        actionReducer = 0.7
                     }
                 //shoes
                 } else {
