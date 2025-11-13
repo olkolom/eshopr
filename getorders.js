@@ -677,7 +677,7 @@ async function saveSale(items, storeID, activeUser) {
     };
 
     //action prepare
-    if (['Kotva'].includes(storeID)) {
+    if (['Kotva', 'Outlet'].includes(storeID)) {
         const moreActionItems = [];
         items.forEach((item, index) => {
             if (item.count > 0) {
@@ -695,7 +695,7 @@ async function saveSale(items, storeID, activeUser) {
                     if (/^[246]/.test(item.productId) && storeID === 'Kotva') { 
                         actionReducer = 0.7 * 0.7
                     }
-                    if (/^[246]/.test(item.productId) && storeID === 'Outlet') { 
+                    if (/^[2]/.test(item.productId) && storeID === 'Outlet') { 
                         actionReducer = 0.7
                     }
                 }
