@@ -1,7 +1,6 @@
 const { MongoClient, ObjectId } = require('mongodb')
 
 const actionArts = [];
-const actionArtsUrl = process.env.DATA_URL + 'actionarts';
 
 //append legacy order state to the order object
 function legacyApi(orders) {
@@ -68,16 +67,17 @@ async function getOrdersData(eshopUri) {
     let ordersToReturn = []
     let productIndex= 0
     const workStatus = ['c','d','n','g']
+    //loading action articles
     try {
-	//add fresh and update new, paid and unpaid orders
-        const actionArtsData = await fetch(actionArtsUrl);
-        if (actionArtsData.ok) {
-            const loadedArts = await actionArtsData.text();
-            actionArts.push(...loadedArts.split(/\r?\n/).filter(line => line.trim() !== ''));
-            console.log(` Loaded ${actionArts.length} action arts`);
-        } else {
-            console.log('Problem with loading action arts data');
-        }
+        const loadedArts = await Bun.s3.file("actionarts").text()
+        actionArts.push(...loadedArts.split(/\r?\n/).filter(line => line.trim() !== ''))
+        console.log(` Loaded ${actionArts.length} action arts`)
+    } catch(err) {
+        console.log('Problem with loading action arts data')
+        console.error(err)
+    }
+    //add fresh and update new, paid and unpaid orders
+    try {
         console.log(' Getting orders from DB');
         const ordersToUpdate = await ordersCollection.find(
             { vyrizeno : { $in: workStatus } }, 
@@ -243,6 +243,7 @@ async function getOrdersData(eshopUri) {
                     if (size === '9M+') { size = '9/M' };
                     if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
                     if (["8/9R", "6/7R", "4/5R", "10/11R", "1/3 M", "6/9 M", "12/13R"].includes(size)) { size = size.slice(0,3) };
+                    if (size[2] === '-') { size = size.slice(0,2) + '/' };
                     if (['56','79','78'].includes(productId.slice(0,2)) && ["4","5"].includes(size)) {
                         const stock = await inventoryCollection.findOne({
                             model: productId,
@@ -470,6 +471,7 @@ async function getOrder(orderID) {
             if (size === '9M+') { size = '9/M' };
             if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
             if (["8/9R", "6/7R", "4/5R", "10/11R", "1/3 M", "6/9 M", "12/13R"].includes(size)) { size = size.slice(0,3) };
+            if (size[2] === '-') { size = size.slice(0,2) + '/' };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
                 size,

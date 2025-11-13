@@ -25,7 +25,7 @@
             <% items.forEach((item, index) => { %>
                 <tr>
                     <td><input type="checkbox" id= <%= "itemSelect" + index %> name="item" value=<%= index %>></td>
-                    <td><img src="https://primatrend.cz/pmg/pic/<%= item.productId %>-1.jpg" alt="" border=3 width=100></img></td>
+                    <td><a href="https://media.primigistore.cz/webp/<%= item.productId %>-1.webp"><img src="https://media.primigistore.cz/webp/<%= item.productId %>-1.webp" alt="" border=3 width=100></img></a></td>
                     <td><%= item.productId %></td>
                     <td><%= item.size %></td>
                     <td><%= item.price + ' Kč' %></td>
