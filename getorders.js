@@ -1,6 +1,7 @@
 const { MongoClient, ObjectId } = require('mongodb')
 
 const actionArts = [];
+const actionArtsOther = [];
 
 //append legacy order state to the order object
 function legacyApi(orders) {
@@ -71,7 +72,9 @@ async function getOrdersData(eshopUri) {
     try {
         const loadedArts = await Bun.s3.file("actionarts").text()
         actionArts.push(...loadedArts.split(/\r?\n/).filter(line => line.trim() !== ''))
-        console.log(` Loaded ${actionArts.length} action arts`)
+        const loadedArtsOther = await Bun.s3.file("actionarts40").text()
+        actionArtsOther.push(...loadedArtsOther.split(/\r?\n/).filter(line => line.trim() !== ''))
+        console.log(` Loaded ${actionArts.length} action arts & ${actionArtsOther.length} other action arts`)
     } catch(err) {
         console.log('Problem with loading action arts data')
         console.error(err)
@@ -684,16 +687,19 @@ async function saveSale(items, storeID, activeUser) {
                 let actionReducer = 1;
                 if (item.productId.length > 7) {
                 //apparel
-                    if (item.productId.startsWith('52') || item.productId.startsWith('54') || item.productId.startsWith('56')) {
-                        actionReducer = 0.7 * 0.7
+                    if (['52', '54', '56'].some(prefix => item.productId.startsWith(prefix)) || actionArts.includes(item.productId)) {
+                        actionReducer = 0.5
                     }
-                    if (actionArts.includes(item.productId)) {
-                        actionReducer = 0.7
+                    if (actionArtsOther.includes(item.productId)) {
+                        actionReducer = 0.6
                     }
                 //shoes
                 } else {
+                    if (storeID === 'Kotva') {
+                        actionReducer = 0.8
+                    }
                     if (/^[246]/.test(item.productId) && storeID === 'Kotva') { 
-                        actionReducer = 0.7 * 0.7
+                        actionReducer = 0.5
                     }
                     if (/^[2]/.test(item.productId) && storeID === 'Outlet') { 
                         actionReducer = 0.7
@@ -738,7 +744,7 @@ async function saveSale(items, storeID, activeUser) {
     let saleSaved = false;
     try {
         saleSaved = itemsForSale.length === 0 ? true : await saveSubSale(itemsForSale);
-        // console.log(itemsForSale);
+        //console.log(itemsForSale);
         if (saleSaved && action && actionItem) {
             const result = await saveSubSale([actionItem], voucher);
             //if (result) { actionItem.action = "u" };
