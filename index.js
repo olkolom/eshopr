@@ -7,6 +7,7 @@ const json2csv = require('json2csv')
 const fs = require('fs')
 const dbModule = require ('./getorders.js')
 const users = require('./users.json')
+const { admin } = require('googleapis/build/src/apis/admin/index.js')
 
 const config = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
@@ -17,6 +18,13 @@ const config = {
   mongoUri: process.env.MONGO_URI,
   eshopUri: process.env.ESHOP_URI,
   url: process.env.URL,
+  adminUsers: process.env.ADMIN_USERS ? process.env.ADMIN_USERS.split(',') : [],
+  firm: {
+    name: process.env.FIRM_NAME,
+    account: process.env.FIRM_ACCOUNT,
+    bank: process.env.FIRM_BANK,
+    web: process.env.FIRM_WEB,
+  },
 }
 
 const app = express()
@@ -216,7 +224,7 @@ app.get("/retsave", (req, res)=> {
 })
 
 app.get("/returns", (req, res)=> {
-  const isAdmin = req.session.user === "alexej@solomio.cz" ? true : false;
+  const isAdmin = config.adminUsers.includes(req.session.user)
   if (req.query.orderid !== undefined ) {}
   else dataSource.getReturns().then(data => res.render('returns', {...data, isAdmin}))
 })
@@ -244,7 +252,7 @@ app.get("/ppl", (req, res, next)=> {
 })
 
 app.get("/abo", (req, res, next)=> {
-  if (req.session.user !== "alexej@solomio.cz") return res.redirect("/");
+  if (!config.adminUsers.includes(req.session.user)) return res.redirect("/");
   const type = req.query.type === "card" ? "card" : "abo";
   const other = !req.query.type && !req.query.save ? "list" : type;
   const command = req.query.save === "true" ? "paid" : other;
@@ -267,21 +275,27 @@ app.get("/abo", (req, res, next)=> {
       }
     }
     if (command === "abo") {
-      const aboData = ['UHL1101125                    0000000000000000000000000000'];
-      aboData.push('1 1501 000000 5500')
+      const firm = config.firm
+      const date = new Date()
+      const aboDate = ('' + date.getDate()).padStart(2, '0') + ('' + (date.getMonth() + 1)).padStart(2, '0') + ('' + date.getFullYear()).slice(-2)
+      const aboData = ['UHL1' + aboDate + firm.name.padEnd(20,' ') + ''.padEnd(28,'0')]
+      aboData.push('1 1501 000000 ' + firm.bank.padStart(4,'0'))
       let totalAboSum = 0;
       const aboPayments = []
       data.forEach( item => {
-          const [prefix, accountNumber] = item.account.split('-')
-          let aboAccount = '000000-0000000000'
-          let aboAmount = '000000000000'
-          let aboVS = '0000000000'
-          let aboBank = '0000000000'
-          if (accountNumber === undefined) { 
+          const [prefix, accountNumber] = item.account.split('-').length === 2 ? item.account.split('-') : ["0", item.account]
+          const aboAccount = [prefix.padStart(6, '0'), accountNumber.padStart(10, '0')].join('-')
+          totalAboSum -= item.totalSum
+          const aboAmount = (item.totalSum * -100).toFixed(0).toString().padStart(12, '0')
+          const aboVS = item.vs.toString().padStart(10, '0')
+          const aboBank = item.bank.padStart(6, '0').padEnd(10, '0')
+          aboPayments.push([aboAccount, aboAmount, aboVS, aboBank, '0000000000', 'AV:' + firm.web].join(' '))
 
-          }
-          aboPayments.push([aboAccount, aboAmount, aboVS, aboBank, '0000000000', 'AV:primigistore.cz'].join(' '));
       })
+      const [prefix, accountNumber] = firm.account.split('-').length === 2 ? firm.account.split('-') : ["0", firm.account]
+      const firmAboAccount = [prefix.padStart(6, '0'), accountNumber.padStart(10, '0')].join('-')
+      aboData.push(['2 ' + firmAboAccount, (totalAboSum * 100).toFixed(0).toString().padStart(14, '0'), aboDate].join(' '))
+      aboData.push(...aboPayments)
       aboData.push('3 +')
       aboData.push('5 +')
       if (aboData.length > 1) {
@@ -290,7 +304,7 @@ app.get("/abo", (req, res, next)=> {
         res.setHeader('Content-Type', 'text/plain')
         return res.send(Buffer.from(csvData, 'utf-8'))
       } else {
-        return res.send('Žádné platby kartou k refundaci')
+        return res.send('Žádné platby na bankovní účet k refundaci')
       }
     }
     return res.render('returns', {...data, isAdmin: true})
