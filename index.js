@@ -245,8 +245,56 @@ app.get("/ppl", (req, res, next)=> {
 
 app.get("/abo", (req, res, next)=> {
   if (req.session.user !== "alexej@solomio.cz") return res.redirect("/");
-  const command = req.query.save === "true" ? "savePays" : "getPays";
-  dataSource.getReturns(command).then(data => res.render('returns', {...data, isAdmin: true}))
+  const type = req.query.type === "card" ? "card" : "abo";
+  const other = !req.query.type && !req.query.save ? "list" : type;
+  const command = req.query.save === "true" ? "paid" : other;
+  dataSource.getReturns(command).then(data => {
+    if (command === "card") {
+      const header = ['Comgate ID', 'Refundovana castka']
+      const cardData = [header]
+      data.forEach(ret => {
+        if (ret.pGateId && ret.totalSum !== 0) {
+          cardData.push([ret.pGateId, ret.totalSum * -1])
+        }
+      })
+      if (cardData.length > 1) {
+        const csvData = cardData.map(row => row.join(';')).join('\n')
+        res.setHeader('Content-Disposition', 'attachment; filename="card_refund.csv"')
+        res.setHeader('Content-Type', 'text/plain')
+        return res.send(Buffer.from(csvData, 'utf-8'))
+      } else {
+        return res.send('Žádné platby kartou k refundaci')
+      }
+    }
+    if (command === "abo") {
+      const aboData = ['UHL1101125                    0000000000000000000000000000'];
+      aboData.push('1 1501 000000 5500')
+      let totalAboSum = 0;
+      const aboPayments = []
+      data.forEach( item => {
+          const [prefix, accountNumber] = item.account.split('-')
+          let aboAccount = '000000-0000000000'
+          let aboAmount = '000000000000'
+          let aboVS = '0000000000'
+          let aboBank = '0000000000'
+          if (accountNumber === undefined) { 
+
+          }
+          aboPayments.push([aboAccount, aboAmount, aboVS, aboBank, '0000000000', 'AV:primigistore.cz'].join(' '));
+      })
+      aboData.push('3 +')
+      aboData.push('5 +')
+      if (aboData.length > 1) {
+        const csvData = aboData.join('\n')
+        res.setHeader('Content-Disposition', 'attachment; filename="bank_refund.kpc"')
+        res.setHeader('Content-Type', 'text/plain')
+        return res.send(Buffer.from(csvData, 'utf-8'))
+      } else {
+        return res.send('Žádné platby kartou k refundaci')
+      }
+    }
+    return res.render('returns', {...data, isAdmin: true})
+  })
 });
 
 app.listen(config.port, () => {

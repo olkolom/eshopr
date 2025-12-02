@@ -600,17 +600,44 @@ async function getReturns(command) {
     } catch(err) {
         console.log('Get returns data error:' + err.message)
     }
+
     if (command) {
-        const woPays = returns.filter(item => item.vs && item.datePay === '');
-        if (command === "savePays") {
+        const woPays = returns.filter(item => item.vs && item.datePay === '')
+
+        if (command === "paid") {
             const date = new Date().toISOString().slice(0,10);
             for (const item of woPays) {
                 await returnsCollection.updateOne({_id: new ObjectId( item._id )}, { $set: { datePay: date }})
             };
         }
+
+        if (command === "card") {
+            const pGateData = await Bun.s3.file("cardtrans.csv").text()
+            const pGateLines = pGateData.split(/\r?\n/).filter(line => line.trim() !== '')
+            const pGateRecords = pGateLines.map(line => {
+                const [pGateId, esrOrderId] = line.split(';')
+                return { pGateId, esrOrderId }
+            })
+            console.log(` Loaded ${pGateRecords.length} pGate records `)
+            return woPays.map( item => {
+                if (item.account.length > 0) { return item }
+                const pGateRecord = pGateRecords.find(record => record.esrOrderId === item.order);
+                if (pGateRecord) {
+                    return { ...item, pGateId: pGateRecord.pGateId }
+                } else {
+                    return item
+                }
+            })
+        }
+
+        if (command === "abo") {
+            return woPays.filter( item => item.account.length > 0 && item.bank.length > 0 )
+        }
+
         return { returns: woPays };
     };
-    return {returns}
+
+    return { returns }
 } 
 
 async function saveSale(items, storeID, activeUser) {
@@ -680,7 +707,7 @@ async function saveSale(items, storeID, activeUser) {
     };
 
     //action prepare
-    if (['Kotva', 'Outlet'].includes(storeID)) {
+    if (['Kotva'].includes(storeID)) {
         const moreActionItems = [];
         items.forEach((item, index) => {
             if (item.count > 0) {
