@@ -711,27 +711,23 @@ async function saveSale(items, storeID, activeUser) {
         const moreActionItems = [];
         items.forEach((item, index) => {
             if (item.count > 0) {
-                let actionReducer = 1;
+                let actionReducer = 0.8;
+                /*
                 if (item.productId.length > 7) {
                 //apparel
-                    if (['52', '54', '56'].some(prefix => item.productId.startsWith(prefix)) || actionArts.includes(item.productId)) {
-                        actionReducer = 0.5 * 0.7
-                    }
-                    if (actionArtsOther.includes(item.productId)) {
-                        actionReducer = 0.6 * 0.7
+                    if (['52', '54', '56'].some(prefix => item.productId.startsWith(prefix)) || actionArts.includes(item.productId) || actionArtsOther.includes(item.productId)) {
+                        actionReducer = 0.7
                     }
                 //shoes
                 } else {
-                    if (storeID === 'Kotva') {
-                        actionReducer = 0.8
-                    }
                     if (/^[246]/.test(item.productId) && storeID === 'Kotva') { 
-                        actionReducer = 0.5 * 0.7
+                        actionReducer = 0.7
                     }
                     if (/^[246]/.test(item.productId) && storeID === 'Outlet') { 
                         actionReducer = 0.7
                     }
                 }
+                */
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer)
             }
         })
