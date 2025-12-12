@@ -3,11 +3,14 @@ const express = require('express')
 const session = require('express-session')
 const MongoDBStore = require('connect-mongodb-session')(session)
 const ejs = require('ejs')
+//get use of it
 const json2csv = require('json2csv')
 const fs = require('fs')
-const dbModule = require ('./getorders.js')
 const users = require('./users.json')
-const { admin } = require('googleapis/build/src/apis/admin/index.js')
+//////////////
+import { MongoClient } from 'mongodb'
+import getOrders from './getorders.js'
+
 
 const config = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
@@ -27,9 +30,14 @@ const config = {
   },
 }
 
-const app = express()
+const mongoClient = new MongoClient(config.mongoUri)
+await mongoClient.connect()
+console.log('Connected to DB')
+const db = mongoClient.db('pmg')
 
-const dataSource = dbModule.init(config.mongoUri)
+const dataSource = getOrders(db)
+
+const app = express()
 
 const sessionStore = new MongoDBStore({
   uri: config.mongoUri,
@@ -77,10 +85,10 @@ app.get('/auth', (req, res) => {
           req.session.user = userinfo.data.email
           req.session.loginTime = loginTime
           console.log(`${userinfo.data.email} have logged in at ${loginTime}`)
-          res.redirect('/')
+          return res.redirect('/')
         } else {
           console.log(`${userinfo.data.email} have tried to log in at ${loginTime}`)
-          res.send('Nepovolený přístup')
+          return res.send('Nepovolený přístup')
         }
       })
     })
@@ -92,7 +100,7 @@ app.get('/auth', (req, res) => {
       scope: 'https://www.googleapis.com/auth/userinfo.email'
     })
   console.log('Login attempt...')
-  res.redirect(connectionUrl)
+  return res.redirect(connectionUrl)
 })
 
 app.use((req, res, next) => req.session.isAuthed ? next() : res.redirect('/auth'))

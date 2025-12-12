@@ -1,4 +1,4 @@
-const { MongoClient, ObjectId } = require('mongodb')
+const { ObjectId } = require('mongodb')
 
 const actionArts = [];
 const actionArtsOther = [];
@@ -138,7 +138,7 @@ async function getOrdersData(eshopUri) {
             const dbQuery = { vyrizeno : { $in: workStatus} }
             const dbOptions = { sort: {'id_order': 1} }
             const ordersSelection = await ordersCollection.find(dbQuery, dbOptions).toArray()
-            for (orderIndex = 0; orderIndex < ordersSelection.length; orderIndex++) {
+            for (let orderIndex = 0; orderIndex < ordersSelection.length; orderIndex++) {
                 const order = ordersSelection[orderIndex]
                 let status = ''
                 let toSend = false
@@ -180,17 +180,8 @@ async function getOrdersData(eshopUri) {
                         const pointIDStart = pointName.indexOf('[');
                         if (pointIDStart !== -1) {
                             pointID = pointName.slice(pointIDStart + 1, pointName.length - 1);
-                        } else {
-                            //looking for pointID at DB
-                            const point = await glsPoints.findOne({ 'Name': pointName });
-                            if (point && point.ID) { 
-                                pointID = point.ID 
-                            } else {
-                                //TODO refresh GLS points collections
-                                console.log(`PointID not found for ${pointName} order ${order.id_order}`)
-                            }
-                        }
-                    } else { console.log (`Problem with decoding point name from ${deliveryType}`)}
+                        } else { console.log (`Problem with decoding point name from ${deliveryType}`)}
+                    }
                 };
                 const services = isPoint ? 'PSD(' + pointID + ')' : '';
 		        const ulice = order.customer.delivery_information.street.replace(',', ' ');
@@ -225,7 +216,7 @@ async function getOrdersData(eshopUri) {
                 }
                 
                 //productlist + assign stores and action 'n' or 'u'
-                for (i=order.row_list.length -1; i >= 0; i--) {
+                for (let i = order.row_list.length -1; i >= 0; i--) {
                     const product = order.row_list[i]
                     let productId = product.product_number
                     let isSolomio = false;
@@ -434,7 +425,7 @@ async function getOrdersData(eshopUri) {
 async function getOrder(orderID) {
     try {
         const order = await ordersCollection.findOne({number: orderID})
-        orderData = {
+        const orderData = {
                 id: order.id_order,
                 number: order.number,
                 name: order.customer.delivery_information.name,
@@ -458,7 +449,7 @@ async function getOrder(orderID) {
                 count: product.count,
             })
         })
-        for (i = 0; i < items.length; i++) {
+        for (let i = 0; i < items.length; i++) {
             let product = items[i];
             let storeID = 'Nejsou';
             let storePrice = 0;
@@ -515,9 +506,9 @@ async function getOrder(orderID) {
                     }}
                 }
             };
-            let sold = await salesCollection.findOne(query);
+            const sold = await salesCollection.findOne(query);
             if (sold !== null) {
-                soldItem = sold.items.find(e => (e.productId === product.productId && e.size === size ))
+                const soldItem = sold.items.find(e => (e.productId === product.productId && e.size === size ))
                 storeID = sold.storeID
                 storePrice = soldItem.price
                 soldDate = sold.date
@@ -529,10 +520,10 @@ async function getOrder(orderID) {
             items[i].user = user
         }
         orderData.items = items
+        return orderData
     } catch(err) {
         console.log('Get order data error:' + err.message)
     }
-    return orderData
 } 
 
 async function saveReturn(data) {
@@ -607,7 +598,7 @@ async function getReturns(command) {
         if (command === "paid") {
             const date = new Date().toISOString().slice(0,10);
             for (const item of woPays) {
-                await returnsCollection.updateOne({_id: new ObjectId( item._id )}, { $set: { datePay: date }})
+                await returnsCollection.updateOne({_id: ObjectId.createFromHexString( item._id )}, { $set: { datePay: date }})
             };
         }
 
@@ -802,11 +793,11 @@ async function getSales(storeID, date) {
 async function getEan(id) {
     const salesData = [];
     try {
-        const sale = await salesCollection.findOne({ _id: new ObjectId(id) });
+        const sale = await salesCollection.findOne({ _id: ObjectId.createFromHexString(id) });
         if (sale) { 
             const newItems = [];
             const { items } = sale;
-            for (i = 0; i < items.length; i++) {
+            for (let i = 0; i < items.length; i++) {
                 const { productId, size } = items[i];
                 const variant = await inventoryCollection.findOne({ prodId: productId, size });
                 newItems.push({...items[i], ean: variant ? variant.ean : 0 });
@@ -900,22 +891,24 @@ async function getItem (item) {
     return searchedItem
 }
 
-var ordersCollection, inventoryCollection, salesCollection, returnsCollection, glsPoints
+let ordersCollection, inventoryCollection, salesCollection, returnsCollection
 
-function init (mongoUri) {
-    const mongoClient = new MongoClient(mongoUri)
-    mongoClient.connect().then(() => {
-        console.log('Connected to DB')
-        const db = mongoClient.db('pmg')
-        ordersCollection = db.collection('orders')
-        inventoryCollection = db.collection('variants')
-        salesCollection = db.collection('sales')
-        returnsCollection = db.collection('returns')
-        glsPoints = mongoClient.db('gls').collection('points');
-    })
+function init (db) {
+    ordersCollection = db.collection('orders')
+    inventoryCollection = db.collection('variants')
+    salesCollection = db.collection('sales')
+    returnsCollection = db.collection('returns')
     return {
-        getOrdersData, saveSale, saveReturn, getReturns, getSales, getOrdersByItem, getOrder, getItem, getEan,
+        getOrdersData, 
+        saveSale, 
+        saveReturn, 
+        getReturns, 
+        getSales, 
+        getOrdersByItem, 
+        getOrder, 
+        getItem, 
+        getEan,
     }
 }
 
-module.exports = { init }
+export default init
