@@ -707,7 +707,7 @@ async function saveSale(items, storeID, activeUser) {
     };
 
     //action prepare
-    if (['Outlet'].includes(storeID)) {
+    if (false && ['Outlet'].includes(storeID)) {
         const moreActionItems = [];
         items.forEach((item, index) => {
             if (item.count > 0) {
