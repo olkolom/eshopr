@@ -33,6 +33,7 @@ const dataSource = dbModule.init(config.mongoUri)
 
 const sessionStore = new MongoDBStore({
   uri: config.mongoUri,
+  databaseName: 'pmg',
   collection: 'sessions',
 })
 

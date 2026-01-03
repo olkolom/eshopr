@@ -71,8 +71,10 @@ async function getOrdersData(eshopUri) {
     //loading action articles
     try {
         const loadedArts = await Bun.s3.file("actionarts").text()
+        actionArts.length = 0
         actionArts.push(...loadedArts.split(/\r?\n/).filter(line => line.trim() !== ''))
         const loadedArtsOther = await Bun.s3.file("actionarts40").text()
+        actionArtsOther.length = 0
         actionArtsOther.push(...loadedArtsOther.split(/\r?\n/).filter(line => line.trim() !== ''))
         console.log(` Loaded ${actionArts.length} action arts & ${actionArtsOther.length} other action arts`)
     } catch(err) {
