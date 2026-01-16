@@ -709,11 +709,12 @@ async function saveSale(items, storeID, activeUser) {
     };
 
     //action prepare
-    if (false && ['Outlet'].includes(storeID)) {
+    if (['Kotva'].includes(storeID)) {
         const moreActionItems = [];
         items.forEach((item, index) => {
             if (item.count > 0) {
                 let actionReducer = 0.8;
+                /*
                 if (item.productId.length > 7) {
                 //apparel
                     if (['52', '54', '56'].some(prefix => item.productId.startsWith(prefix)) || actionArts.includes(item.productId) || actionArtsOther.includes(item.productId)) {
@@ -728,6 +729,7 @@ async function saveSale(items, storeID, activeUser) {
                         actionReducer = 0.7
                     }
                 }
+                */
                 items[index].storePrice = Math.round(items[index].storePrice * actionReducer)
             }
         })
