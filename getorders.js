@@ -2,6 +2,7 @@ const { MongoClient, ObjectId } = require('mongodb')
 
 const actionArts = [];
 const actionArtsOther = [];
+const specialArts = [];
 
 //append legacy order state to the order object
 function legacyApi(orders) {
@@ -73,10 +74,13 @@ async function getOrdersData(eshopUri) {
         const loadedArts = await Bun.s3.file("actionarts").text()
         actionArts.length = 0
         actionArts.push(...loadedArts.split(/\r?\n/).filter(line => line.trim() !== ''))
-        const loadedArtsOther = await Bun.s3.file("actionarts40").text()
+        const loadedArtsOther = await Bun.s3.file("actionarts20").text()
         actionArtsOther.length = 0
         actionArtsOther.push(...loadedArtsOther.split(/\r?\n/).filter(line => line.trim() !== ''))
-        console.log(` Loaded ${actionArts.length} action arts & ${actionArtsOther.length} other action arts`)
+        const loadedSpecArts = await Bun.s3.file("specialarts").text()
+        specialArts.length = 0
+        specialArts.push(...loadedSpecArts.split(/\r?\n/).filter(line => line.trim() !== ''))
+        console.log(` Loaded ${actionArts.length} action arts & ${actionArtsOther.length} other action arts & special arts ${specialArts.length}`)
     } catch(err) {
         console.log('Problem with loading action arts data')
         console.error(err)
@@ -247,7 +251,7 @@ async function getOrdersData(eshopUri) {
                     if (size === '4R+') { size = '4/6'};
                     if (size === '9M+') { size = '9/M' };
                     if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
-                    if (["8/9R", "6/7R", "4/5R", "10/11R", "1/3 M", "6/9 M", "12/13R"].includes(size)) { size = size.slice(0,3) };
+                    if (["8/9R", "6/7R", "4/5R", "10/11R", "1/3 M", "6/9 M", "12/13R", "15/16", "17/18"].includes(size)) { size = size.slice(0,3) };
                     if (size[2] === '-') { size = size.slice(0,2) + '/' };
                     if (['56','79','78'].includes(productId.slice(0,2)) && ["4","5"].includes(size)) {
                         const stock = await inventoryCollection.findOne({
@@ -475,7 +479,7 @@ async function getOrder(orderID) {
             if (size === '4R+') { size = '4/6'};
             if (size === '9M+') { size = '9/M' };
             if (size === '18M+' || size === '24M+') { size = size.slice(0,2) + '/' };
-            if (["8/9R", "6/7R", "4/5R", "10/11R", "1/3 M", "6/9 M", "12/13R"].includes(size)) { size = size.slice(0,3) };
+            if (["8/9R", "6/7R", "4/5R", "10/11R", "1/3 M", "6/9 M", "12/13R", "15/16", "17/18"].includes(size)) { size = size.slice(0,3) };
             if (size[2] === '-') { size = size.slice(0,2) + '/' };
             let stock = await inventoryCollection.findOne({
                 model: product.productId,
@@ -713,22 +717,28 @@ async function saveSale(items, storeID, activeUser) {
         const moreActionItems = [];
         items.forEach((item, index) => {
             if (item.count > 0) {
-                let actionReducer = 0.8;
+                let actionReducer = 1;
                 if (item.productId.length > 7) {
                 //apparel
                     if (['59'].some(prefix => item.productId.startsWith(prefix))) {
-                        actionReducer = actionItems.includes(item.productId) ? 0.7 : 1 
+                        actionReducer = 0.5 //actionArts.includes(item.productId) ? 1 : 0.5
+                        //actionReducer = actionArts.includes(item.productId) ? 0.7 : 1 
+                        //actionReducer = actionArtsOther.includes(item.productId) ? 0.8 : 1
                     }
+                    items[index].storePrice = Math.floor(items[index].storePrice * actionReducer)
                 //shoes
                 } else {
                     if (/^[1]/.test(item.productId) && storeID === 'Kotva') { 
-                        actionReducer = productType === "Sandály" ? 1 : 0.7
+                        actionReducer = item.productType === "Sandály" ? 0.8 : 0.7
+                    }
+                    if (/^[357]/.test(item.productId) && storeID === 'Kotva') {
+                        actionReducer = 0.5 
                     }
                     if (/^[57]/.test(item.productId) && storeID === 'Outlet') { 
-                        actionReducer = 0.7 
+                        actionReducer = specialArts.includes(item.productId) ? 0.7 : 0.7 
                     }
+                    items[index].storePrice = Math.round(items[index].storePrice * actionReducer)
                 }
-                items[index].storePrice = Math.round(items[index].storePrice * actionReducer)
             }
         })
     };
